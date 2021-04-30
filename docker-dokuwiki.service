@@ -1,0 +1,16 @@
+[Unit]
+Description=DokuWiki Container
+#Requires=docker.service
+#After=docker.service
+After=docker.service
+Wants=network-online.target docker.socket
+Requires=docker.socket
+[Service]
+WorkingDirectory=/home/testforota02
+Restart=always
+ExecStart=/bin/bash systemd_src.sh
+#ExecStart=/usr/bin/docker start -a mywiki
+ExecStop=/usr/bin/docker stop -t 2 mywiki
+
+[Install]
+WantedBy=multi-user.target
