@@ -192,7 +192,7 @@ def auto_download(dir,stockid,host_dir):
         #     return
     db_handler.close()
     try:
-        if _date!=None:
+        if _date is not None:
             download_SRC_V2(dir=dir,stockid=stockid,df=_date,host_dir=host_dir)
     except Exception as E:
         print('Error : ', E)
