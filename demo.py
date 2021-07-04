@@ -1,28 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
-# %load demo.py
-#!/usr/bin/env python
-
-# In[1]:
-
-
-# %load demo.py
-#!/usr/bin/env python
-
-# In[1]:
-
-
-# %load demo.py
-#!/usr/bin/env python
-
-# In[1]:
 import sys
-import time
-import bz2
+
+# import bz2
 import pandas as pd
 import io,re,os 
 import requests, shutil, time, cv2
@@ -31,7 +12,10 @@ import numpy as np
 from keras.models import load_model
 from preprocessBatch import preprocessing
 from utilities import one_hot_decoding
-
+import upload_file 
+# from datetime import date as GG
+import json
+from datetime import date, timedelta, datetime
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 allowedChars = 'ACDEFGHJKLNPQRTUVXYZ2346789';
@@ -174,15 +158,6 @@ def SRC_data_preprocessing(stockid,resp,date):
 
     return True
 
-
-# In[3]:
-
-
-
-import upload_file 
-# from datetime import date as GG
-import json
-from datetime import date, timedelta, datetime
 def create_cookies():
     fixed_value=';SCREEN_SIZE=WIDTH=1093&HEIGHT=615'
     today=date.today()
@@ -357,8 +332,10 @@ def Line_agent(condition,message):
         titail="twse start "
     elif condition==2 :
         titail="twse end "
-    else :
+    elif condition==3 :
         titail="start="+message+"end="+current_time
+    else :
+        titail=message
     Line_agent.sendMessage(titail)
 
 
@@ -379,7 +356,7 @@ def local_folder(dir_target="./"):
             combine_name=str(root)+str(name)
             if dir_target!="./":
                 combine_name=str(name)
-            print(root)
+            # print(root)
             if root != dir_target:
                 continue
             
@@ -467,7 +444,9 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./'):
                 os.rmdir(path)
         else:
             shutil.rmtree(path, ignore_errors=True)
-
+import Stock_SRC_Small as Stock_Small
+import random_test as my_SRC
+oldfilename='SRCresult.csv'
 if __name__ == '__main__':
     # directory_list=local_folder('2020-07-23')
     # local_files=local_file('2020-07-23')
@@ -477,9 +456,17 @@ if __name__ == '__main__':
     start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     main()
     upload_agent()
+    Stock_Small.main()
     delet_folder(remain_num=1)
     delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
+    A=my_SRC.find_SRC_by_condition(dir='./small_test/')
+    #print(A)
+    notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
+    #print(notify)
     Line_agent(condition=3,message=start_t+str(sys.argv))
+    if notify is True:
+        Line_agent(condition=4,message=str(A))
+
 #     notify_service(2)
 #     stockid_list=get_stockid('股票','上市認購(售)權證')
 

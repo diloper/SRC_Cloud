@@ -1,8 +1,10 @@
 #!/bin/bash
 search_dir='/home/testforta01/SRC_D'
 #search_dir=$(eval echo ~$USER)'/SRC_D'
-#echo $search_dirA
-search_dir=$(pwd)'/SRC_D'
+
+#search_dir=$(pwd)'/SRC_D'
+search_dir=$(pwd)
+echo $search_dir
 for entry in "$search_dir"/*;
 do
 	#basename= "$entry"
@@ -15,7 +17,7 @@ do
 	fi
 done
 
-#delect tmp*.py pyc file
+#delect pyc file
 find . -name "*tmp*.py" -exec rm -f {} \;
 find . -name "*.pyc" -exec rm -f {} \;
 echo '####################################################'
@@ -23,7 +25,7 @@ echo 'Stopping running containers (if available)...'
 echo '####################################################'
 docker container stop $(docker ps -aq)
 #docker container rm $(docker ps -aq)
-#docker run  --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py
+docker run  --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py
 sys_arg=$(hostname)
 #docker run  -d --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py $sys_arg
 #sudo shutdown -h now
