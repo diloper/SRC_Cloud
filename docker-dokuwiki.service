@@ -6,11 +6,11 @@ After=docker.service
 Wants=network-online.target docker.socket
 Requires=docker.socket
 [Service]
-WorkingDirectory=/home/testforota02/SRC_Cloud/
+WorkingDirectory=/home/testforota03/SRC_Cloud/
 Restart=always
 ExecStart=/bin/bash systemd_src.sh
 #ExecStart=/usr/bin/docker start -a mywiki
-ExecStop=/usr/bin/docker stop -t 2 mywiki
+ExecStop=/bin/bash stop_container.sh
 
 [Install]
 WantedBy=multi-user.target
