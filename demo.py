@@ -14,12 +14,6 @@
 #!/usr/bin/env python
 
 # In[1]:
-
-
-# %load demo.py
-#!/usr/bin/env python
-
-# In[1]:
 import sys
 import time
 import bz2
@@ -239,7 +233,20 @@ def get_stockid(head,tail):
     k=dfx.iloc[index1+1:index2,0]
     
     return k.tolist()
+# upload xxxx.gz to google driver，指定Stock db為根目錄
+ 
 
+def upload(D_Handel,folder_id,foldername,file_prex,remove=True):
+    file_id=D_Handel.search_file(name=file_prex+".gz",folder_id=folder_id)
+    filepath=foldername+"/"+file_prex+".gz"
+    if file_id is None:
+        D_Handel.uploadFile(filename=file_prex+".gz",filepath=filepath
+                            ,mimetype="application/zip"
+                            ,folder_id=folder_id)
+    else:
+        if remove==True:
+            os.remove(filepath)
+        
 
 def local_file(last_folder):
     # 歷遍資料夾下的的檔案名稱，符合後紀錄於local_files
@@ -251,7 +258,19 @@ def local_file(last_folder):
             local_files.append(name)
     return local_files
         
+def local_folder(target=None):
+# 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
+    directory_list = list()
+    for root, dirs, files in os.walk("./"):
+        # print(dirs)
+        # if  target!=None and target in dirs:
+        for name in dirs:
+#             print (root,name)
+            x = re.search(r"\.\/\d{4}-\d{2}-\d{2}", str(root)+str(name))
+            if x is not None:
+                directory_list.append(os.path.join(root, name))
 
+    return directory_list
 
 
 import progressbar
@@ -307,7 +326,35 @@ def main():
                 print(e)
         
                 
+def upload_agent():
+    directory_list=local_folder()
+    directory_list.sort(reverse = True)
+#     last_folder=directory_list.pop()
+# local_files=local_file(last_folder=last_folder) 
+    D_Handel=upload_file.Google_Driver_API()
+    root_folder_id=D_Handel.search_folder(name='Stock db')
 
+    for index,foldername in progressbar.progressbar(enumerate(directory_list)):
+        # print("index "+str(index))
+        r_foldername=foldername.replace('./','')
+        folder_id=D_Handel.search_folder(name=r_foldername,folder_id=root_folder_id)
+#     無，則建立資料夾
+        if folder_id is None:
+            folder_id=D_Handel.search_folder(name='Stock db')
+            folder_id=D_Handel.createFolder(name=r_foldername,folder_id=folder_id)  
+        
+        local_files=local_file(last_folder=foldername)
+        for filename in progressbar.progressbar(local_files):
+#             print(filename)
+            try:
+                if index == 0:
+                    r_flag=False
+                else:
+                    r_flag=True
+                upload(D_Handel=D_Handel,folder_id=folder_id,foldername=foldername
+                                                          ,file_prex=filename,remove=r_flag)
+            except Exception as  e:
+                print(e)
 def notify_service(action):
     filen='endSRC'
     # using file to notify bash script service condition
@@ -318,12 +365,42 @@ def notify_service(action):
         # titail="twse start "
 
     elif action==2 :
-        open(filen,mode='a').close()     
-
-
-
-
-
+        open(filen,mode='a').close()                
+def deletEmpty_folder():
+    directory_list=local_folder()
+    # print(directory_list)
+    directory_list.sort(reverse = True)
+    directory_list.pop(0)
+    # print(directory_list)
+    for path in directory_list:
+        directory= os.listdir(path) 
+        if len(directory) == 0: 
+            # print("Empty directory") 
+            os.rmdir(path)
+        # else: 
+            # print("Not empty directory")
+import line_bot_test
+def Line_agent(condition,message):
+    Line_agent=line_bot_test.M_line_Bot_API()
+    current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    if condition==1 :
+        titail="twse start "
+    elif condition==2 :
+        titail="twse end "
+    else :
+        titail="start="+message+"end="+current_time
+    Line_agent.sendMessage(titail)
+if __name__ == '__main__':
+    # directory_list=local_folder('2020-07-23')
+    # local_files=local_file('2020-07-23')
+    notify_service(1)
+    start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    main()
+    upload_agent()
+    deletEmpty_folder()
+    Line_agent(condition=3,message=start_t)
+    notify_service(2)
+#     stockid_list=get_stockid('股票','上市認購(售)權證')
 
 
 
@@ -349,137 +426,6 @@ def getList():
 
 
 
-import line_bot_test
-def Line_agent(condition,message):
-    Line_agent=line_bot_test.M_line_Bot_API()
-    current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if condition==1 :
-        titail="twse start "
-    elif condition==2 :
-        titail="twse end "
-    else :
-        titail="start="+message+"end="+current_time
-    Line_agent.sendMessage(titail)
 
 
-
-# In[2]:
-
-
-
-def local_folder(dir_target="./"):
-# 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
-    directory_list = list()
-#     print(dir_target)
-    for root, dirs, files in os.walk(dir_target):
-
-        # if  target!=None and target in dirs:
-        for name in dirs:
-            
-            combine_name=str(root)+str(name)
-            if dir_target!="./":
-                combine_name=str(name)
-            print(root)
-            if root != dir_target:
-                continue
-            
-            x = re.search(r"\d{4}-\d{2}-\d{2}", combine_name)
-            if x is not None:
-                directory_list.append(os.path.join(root, name))
-
-    return directory_list
-
-target = r'./older'
-
-
-
-# upload xxxx.gz to google driver，指定Stock db為根目錄
- 
-
-def upload(D_Handel,folder_id,foldername,file_prex,remove=True):
-    file_id=D_Handel.search_file(name=file_prex+".gz",folder_id=folder_id)
-    filepath=foldername+"/"+file_prex+".gz"
-#     print(target+"/"+filepath[2:])
-    if file_id is None:
-        D_Handel.uploadFile(filename=file_prex+".gz",filepath=filepath
-                            ,mimetype="application/zip"
-                            ,folder_id=folder_id)
-    else:
-        if remove==True:
-#             os.remove(filepath)
-#             print(target+"/"+foldername[2:])
-            if os.path.isdir(target+"/"+foldername[2:]) is False:
-                print("目錄不存在。")
-                os.makedirs(target+"/"+foldername[2:])
-                
-            shutil.move(filepath,target+"/"+filepath[2:])
-        
-
-def upload_agent():
-    directory_list=local_folder()
-#     print(directory_list)
-    directory_list.sort(reverse = True)
-#     last_folder=directory_list.pop()
-# local_files=local_file(last_folder=last_folder) 
-    D_Handel=upload_file.Google_Driver_API()
-    root_folder_id=D_Handel.search_folder(name='Stock db')
-
-    for index,foldername in progressbar.progressbar(enumerate(directory_list)):
-        # print("index "+str(index))
-        r_foldername=foldername.replace('./','')
-        folder_id=D_Handel.search_folder(name=r_foldername,folder_id=root_folder_id)
-#     無，則建立資料夾
-        if folder_id is None:
-            folder_id=D_Handel.search_folder(name='Stock db')
-            folder_id=D_Handel.createFolder(name=r_foldername,folder_id=folder_id)  
-        
-        local_files=local_file(last_folder=foldername)
-#         print(str(index))
-    
-        for filename in progressbar.progressbar(local_files):
-            
-            try:
-                if index == 0:
-                    # index==0 表示為目前最新的資料夾  不用改變目錄 或 刪除
-                    r_flag=False
-                else:
-                    r_flag=True
-#                     print(foldername+"/"+filename)
-                upload(D_Handel=D_Handel,folder_id=folder_id,foldername=foldername
-                                                          ,file_prex=filename,remove=r_flag)
-            except Exception as  e:
-                print(e)
-#   local_folder name  ORDER by date DESC
-def delet_folder(remain_num,check_Empty=True,dir_target='./'):
-    directory_list=local_folder(dir_target=dir_target)
-#     print(dir_target)
-    directory_list.sort(reverse = True)
-#     directory_list.pop(0)
-#     print(directory_list)
-    del directory_list[0:remain_num]
-#     print(directory_list)
-    for path in directory_list:
-        if check_Empty == True: 
-            directory= os.listdir(path) 
-#         len(directory)=0 表示資料夾內部為空的
-            if len(directory) == 0: 
-                # print("Empty directory") 
-                os.rmdir(path)
-        else:
-            shutil.rmtree(path, ignore_errors=True)
-
-if __name__ == '__main__':
-    # directory_list=local_folder('2020-07-23')
-    # local_files=local_file('2020-07-23')
-#     notify_service(1)
-    # argvL=str(sys.argv)
-    print ('Argument List:', str(sys.argv))
-    start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    main()
-    upload_agent()
-    delet_folder(remain_num=1)
-    delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
-    Line_agent(condition=3,message=start_t+str(sys.argv))
-#     notify_service(2)
-#     stockid_list=get_stockid('股票','上市認購(售)權證')
 

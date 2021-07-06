@@ -2,7 +2,7 @@
 search_dir='/home/testforta01/SRC_D'
 #search_dir=$(eval echo ~$USER)'/SRC_D'
 #echo $search_dirA
-search_dir=$(pwd)'/SRC_D'
+search_dir=$(pwd)
 for entry in "$search_dir"/*;
 do
 	#basename= "$entry"
@@ -23,9 +23,9 @@ echo 'Stopping running containers (if available)...'
 echo '####################################################'
 docker container stop $(docker ps -aq)
 #docker container rm $(docker ps -aq)
-#docker run  --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py
 sys_arg=$(hostname)
-#docker run  -d --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py $sys_arg
+#docker run  --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py $sys_arg
+docker run  -d --rm --mount type=bind,source="$search_dir",target=/tmp --name SRC_Server diloper/tensorflow_evn:latest python demo.py $sys_arg
 #sudo shutdown -h now
 #while [[ -d /proc/$(pgrep python) ]]; do sleep 1; done; poweroff
 counter=0
