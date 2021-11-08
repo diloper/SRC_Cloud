@@ -6,7 +6,7 @@ After=docker.service
 Wants=network-online.target docker.socket
 Requires=docker.socket
 [Service]
-WorkingDirectory=/home/testforota03/SRC_Cloud/
+WorkingDirectory=/home/testforota02/SRC_Cloud/
 Restart=always
 ExecStart=/bin/bash systemd_src.sh
 #ExecStart=/usr/bin/docker start -a mywiki
