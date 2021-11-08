@@ -137,7 +137,9 @@ def read_OHLC_From_sqlite(dir,stockid):
         return -1
 
 def auto_download(dir,stockid,host_dir):
-    now = datetime.now()-timedelta(days=1)
+#    now = datetime.now()-timedelta(days=1)
+    now = datetime.now()
+
 #    date_before = date.today() - timedelta(days=20)
     Today = now.strftime("%Y-%m-%d")
 #    print(Today)
