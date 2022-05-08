@@ -34,7 +34,7 @@ print('loading completed')
 
 def crawl_SRC(stockid):
     bsr_session = requests.Session()
-    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/bsMenu.aspx")
+    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/bsMenu.aspx", verify=False)
     soup = BeautifulSoup(resp.text, 'html.parser')
     img_tags = soup.select("#Panel_bshtm img")
 #     print("img_tags len",len(img_tags))
@@ -42,7 +42,7 @@ def crawl_SRC(stockid):
         return False,False
     src = img_tags[0].get('src')
     
-    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/" + src, stream=True)
+    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/" + src, stream=True, verify=False)
     if resp.status_code == 200:
         with open(CAPTCHA_IMG, 'wb') as f:
             resp.raw.decode_content = True
@@ -69,7 +69,7 @@ def crawl_SRC(stockid):
     payload['TextBox_Stkno'] = str(stockid)
     payload['CaptchaControl1'] = predict_captcha
     re_flag=False
-    resp = bsr_session.post("https://bsr.twse.com.tw/bshtm/bsMenu.aspx", data=payload)
+    resp = bsr_session.post("https://bsr.twse.com.tw/bshtm/bsMenu.aspx", data=payload, verify=False)
     if '驗證碼錯誤!' in resp.text:
         print('驗證碼錯誤, predict_captcha: ' + predict_captcha)
         return 0,False
@@ -89,7 +89,7 @@ def crawl_SRC(stockid):
 #         print("completed")
 
         re_flag=True
-        A=bsr_session.get("https://bsr.twse.com.tw/bshtm/bsContent.aspx?v=t")
+        A=bsr_session.get("https://bsr.twse.com.tw/bshtm/bsContent.aspx?v=t", verify=False)
         soup = BeautifulSoup(A.text, 'html.parser')
        
         sample_txt = "<td class=\"column_value\" colspan=\"3\" id=\"receive_date\">  2020/06/30</td>"
@@ -105,7 +105,7 @@ def crawl_SRC(stockid):
                 date=x.group(0).replace("/","-")
         else :
             print("date format error",date)
-        return bsr_session.get("https://bsr.twse.com.tw/bshtm/bsContent.aspx"), date
+        return bsr_session.get("https://bsr.twse.com.tw/bshtm/bsContent.aspx", verify=False), date
     else:
         print("error")
         return False,False
@@ -163,7 +163,7 @@ def create_cookies():
     today=date.today()
     Q=today.strftime("%Y%m%d%H%M%S")  # 格式化日期
     # print(Q)
-    A=requests.get("https://api.ipify.org/?format=json")
+    A=requests.get("https://api.ipify.org/?format=json", verify=False)
     # A.text
     # my_ip = load(A.text)['ip']
     # jsDumps = json.dumps(A.text)  
