@@ -44,7 +44,7 @@ print('loading completed')
 
 def crawl_SRC(stockid):
     bsr_session = requests.Session()
-    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/bsMenu.aspx")
+    resp = bsr_session.get("https://bsr.twse.com.tw/bshtm/bsMenu.aspx", verify=False)
     soup = BeautifulSoup(resp.text, 'html.parser')
     img_tags = soup.select("#Panel_bshtm img")
 #     print("img_tags len",len(img_tags))
