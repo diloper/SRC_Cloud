@@ -46,6 +46,7 @@ function getstockFile(fileURL) {
 
 ## 爬蟲 
 <img width="957" alt="image" src="https://user-images.githubusercontent.com/15354113/188393783-a58c87fb-362b-420e-8342-3ca8ce76f5fc.png">
+<img width="686" alt="image" src="https://user-images.githubusercontent.com/15354113/188401263-0c7a46a6-d928-4e52-a68b-5525ef4c5b97.png">
 
 
 ### 載入驗證碼模型 demo.py
@@ -69,6 +70,28 @@ print('loading completed')
 ## 上傳Google Drive API 啟用方式
 https://d35mpxyw7m7k7g.cloudfront.net/bigdata_1/Get+Authentication+for+Google+Service+API+.pdf
 ## LINE BOT
+建立LINE BOT
+1. 取得Channel access token 存檔後從程式碼讀取，‵sendMessage()‵進行發送
+2. 加入建置頻道
+```
+class M_line_Bot_API:
+#     self.drive_service
+    def __init__(self):
+        config = configparser.ConfigParser()
+        A=config.read('line_bot.ini')
+        access_token=config.get('line-bot', 'channel_access_token')
+        self.to=config.get('line-bot', 'user_id')
+        self.line_bot_api = LineBotApi(access_token)
+        
+    def sendMessage(self,text):
+        try:
+            self.line_bot_api.push_message(self.to, TextSendMessage(text=text))
+        except LineBotApiError as e:
+            print(e)
+```
+<img width="379" alt="image" src="https://user-images.githubusercontent.com/15354113/188402690-843d85e2-d3be-43c0-b9ec-0d815dbca30f.png">
+
+<img width="533" alt="image" src="https://user-images.githubusercontent.com/15354113/188402327-b731589c-ed95-44bb-881a-6231119cbacd.png">
 
 ### 第三方套件 驗證碼相關 preprocessBatch.py 
 https://github.com/maxmilian/twse_bshtm_captcha
