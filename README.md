@@ -77,16 +77,61 @@ CREATE TABLE `OHLC` (
 	`Date`	TEXT, #日期
 	`Open`	REAL, #開盤價
 	`High`	REAL, #最高價
-	`Low`	REAL,   #最低家
+	`Low`	REAL, #最低價
 	`Close`	REAL, #收盤價
 	`Volume`	INTEGER  #成交量股數
 );
 ```
+3. SRC 計算
+定義: 籌碼集中度=(區間買超前15的買張合計-區間賣超前15名的賣張合計)date_size / 區間成交量(period_vol),
+	
+	date_size=15 及  period_vol=60 參數可調整
+	
+	SRC_20 : 20天區成交量 的資料進行計算 
+	
+	SRC_60:  60天區成交量 的資料進行計算
 
-## 分析
-固數值可能變化大，因此透過 移動平均的方式 running average，取得固定周期之平均值。
-計算斜率的變化率
-將資料寫入DB (SQL)
+```
+def get_stock_SRC_(dir,stockid,start,current_date,period_vol,date_size=15,date_source=None):
+    
+    time_interval="sd="+str(start)+"&ed="+str(current_date)
+    # print (time_interval)
+    # 籌碼集中度=(區間買超前15的買張合計-區間賣超前(_date_size)15名的賣張合計) / 區間成交量
+    _date_size=str(date_size)
+
+    if date_source == "sqlite":
+        sqlite_name=dir+str(stockid)+".sqlite"
+        db_handler = sqlite3.connect(sqlite_name)
+        db_handler.create_function("REGEXP", 2, regexp)
+        cursor = db_handler.cursor()
+        cursor.execute('SELECT name FROM  sqlite_master         WHERE type ="table" And name REGEXP "^[0-9\-]+$"          And name >= "'+start+'"         And name <= "'+current_date+'"         ORDER BY name ASC;')
+        # cursor.fetchone()
+        # remaining_rows = cursor.fetchall()
+        rows = cursor.fetchall()
+        table_name_list = rows
+        select_template = 'SELECT BrkId , BuyNetVol FROM "{table_name}"'
+        Fal_df={}
+        # for idx, val in enumerate(ints):
+        for index,item in enumerate(table_name_list):
+            query = select_template.format(table_name = item[0])
+            if index==0:
+                Fal_df=pd.read_sql(query, db_handler)
+            else:
+                tmp=pd.read_sql(query, db_handler)
+                Fal_df = pd.concat([Fal_df, tmp],sort=False)
+
+        A=Fal_df.groupby('BrkId',sort=False).sum().sort_values(by=['BuyNetVol'])
+        # print(A.head(15))
+        Z=A.head(int(15)).div(1000).values.sum()
+        Q=A.tail(int(15)).div(1000).values.sum()
+        sell_top_data_size=A.head(int(_date_size)).div(1000).values.sum()
+        buy_top15_data_size=A.tail(int(_date_size)).div(1000).values.sum()
+
+
+```
+
+## 分析並取出連續性
+
 
 
 
