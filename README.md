@@ -59,14 +59,37 @@ print('loading completed')
 
 1. 當日買賣股票成交價量資訊(無提供歷史紀錄，需要每日儲存)
 `https://bsr.twse.com.tw/bshtm/bsMenu.aspx`，透過`twse_cnn_model.hdf5` model 解析驗證碼後，下載並壓縮檔案
+```,,,
+CREATE TABLE `YYYY-MM-DD` (
+	`id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	`BrkId`	TEXT, #券商
+	`BuyNetAmt`	REAL,# 買進股數*價格-賣出股數*價格
+	`BuyNetVol`	INTEGER # 買進股數-賣出股數
+	`BuyAvg`	REAL,  #平均買進價格
+	`SellAvg`	REAL  #平均賣出價格
+);
+```
 2. 取得股價
-修改`stockid`、`DATE` 可下載歷史股價並將資料寫入DB (SQL)使用stockid 為 Primary key
+修改`stockid`、`DATE` 可下載歷史股價並將資料寫入DB (SQL)使用stockid 作為檔名
 `'https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'`
+```
+CREATE TABLE `OHLC` (
+	`Date`	TEXT, #日期
+	`Open`	REAL, #開盤價
+	`High`	REAL, #最高價
+	`Low`	REAL,   #最低家
+	`Close`	REAL, #收盤價
+	`Volume`	INTEGER  #成交量股數
+);
+```
 
 ## 分析
 固數值可能變化大，因此透過 移動平均的方式 running average，取得固定周期之平均值。
 計算斜率的變化率
 將資料寫入DB (SQL)
+
+
+
 ## 上傳Google Drive API 啟用方式
 https://d35mpxyw7m7k7g.cloudfront.net/bigdata_1/Get+Authentication+for+Google+Service+API+.pdf
 ## LINE BOT
