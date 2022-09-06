@@ -456,6 +456,7 @@ def forecast_Evaluate(dir,stockid,end_date,forecast_day=60):
     # df
     column = df['Close']
     max_index = column.idxmax()
+
     min_index=column.idxmin()
     # compare end date close price with max min
     Hdiff=(column[max_index]-column[0])/column[0]
@@ -609,6 +610,7 @@ def find_SRC_by_condition(dir):
         except Exception as E:
             print('Error :', E)
             print(row)
+    print(Evaluate)
 
     for row in Evaluate.itertuples():
     #     print(row.Index)
@@ -616,7 +618,7 @@ def find_SRC_by_condition(dir):
         str_date=getattr(row, 'str_date')
         socketid=getattr(row, 'socketid')
         # 
-        A,price_diff,end_close=forecast_Evaluate(dir,stockid,end_date)
+        A,price_diff,end_close=forecast_Evaluate(dir,socketid,end_date)
         P,E,G,J=break_bolling_low(dir,socketid,str_date,end_date)
         Evaluate.at[row.Index,'forecast_Evaluate']=A
         Evaluate.at[row.Index,'price_diff']=price_diff
