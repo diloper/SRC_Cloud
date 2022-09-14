@@ -7,7 +7,7 @@
 
 1. 更新本國上市證券 https://isin.twse.com.tw/isin/C_public.jsp?strMode=2
 2. 定時爬蟲下載各股劵商當日籌碼及 並 上傳雲端
-3. 計算個股籌碼集中度下載對應股價
+3. 計算個股籌碼集中度並下載對應股價
 4. 分析數據之變化
 5. 發送LINE BOT通知
 
@@ -55,7 +55,7 @@ print('model loading...')
 model = load_model("twse_cnn_model.hdf5")
 print('loading completed')
 ```
-### 計算籌碼集中度，須下載各股買賣股票成交價量資訊及股價
+### 計算籌碼集中度，須下載各股買賣股票成交價量資訊
 
 1. 當日買賣股票成交價量資訊(無提供歷史紀錄，需要每日儲存)
 `https://bsr.twse.com.tw/bshtm/bsMenu.aspx`，透過`twse_cnn_model.hdf5` model 解析驗證碼後，下載並壓縮檔案
@@ -69,9 +69,9 @@ CREATE TABLE `YYYY-MM-DD` (
 	`SellAvg`	REAL  #平均賣出價格
 );
 ```
-2. 取得股價
-修改`stockid`、`DATE` 可下載歷史股價並將資料寫入DB (SQL)使用stockid 作為檔名
-`'https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'`
+2. 取得成交量
+
+	下載歷史成交量並將資料寫入DB (SQLite 使用stockid作為檔名)
 ```
 CREATE TABLE `OHLC` (
 	`Date`	TEXT, #日期
@@ -82,8 +82,9 @@ CREATE TABLE `OHLC` (
 	`Volume`	INTEGER  #成交量股數
 );
 ```
-3. SRC 計算
-定義: 籌碼集中度=(區間買超前15的買張合計-區間賣超前15名的賣張合計)date_size / 區間成交量(period_vol),
+3. SRC籌碼集中度計算
+
+	定義: 籌碼集中度算法=(區間買超前15的買張合計-區間賣超前15名的賣張合計) date_size / 區間成交量(period_vol)
 	
 	date_size=15 及  period_vol=60 參數可調整
 	
@@ -130,7 +131,8 @@ def get_stock_SRC_(dir,stockid,start,current_date,period_vol,date_size=15,date_s
 
 ## 分析籌碼連續性
 
-1.採用斜率分析籌碼每日之變化，為觀察斜率連續為正或負特性，透過數學式 $\frac{X}{|X|}$ `df['M20']/abs(df['M20'])`簡化斜率正負(+1 或 -1)；
+1.採用斜率分析籌碼每日之變化，為觀察斜率連續為正或負特性，透過數學式 $\frac{X}{|X|}$ `df['M20']/abs(df['M20'])`簡化斜率正負(+1 或 -1)
+
 2.後續透過(rolling)移動平均方式計算總合 e.g. 若+1連續五次，則表示籌法斜率連續五次為正
 
 ```
