@@ -3,13 +3,13 @@
 
 主要功能分析股市籌碼集中度、股價變化，並設定條件可透過LINE BOT通知 
 ## 流程
-分為X個流程，以下將分別詳細說明
+分為5個流程，以下將分別詳細說明
 
 1. 更新本國上市證券 https://isin.twse.com.tw/isin/C_public.jsp?strMode=2
-2. 爬蟲 定時下載各股當日籌碼及股價  download_SRC.py
-3. 過濾出所需資料 寫入DB 並上傳至雲端資料
-4. 分析 股價數據之變化
-5. 發送LINE BOT
+2. 定時爬蟲下載各股劵商當日籌碼及 並 上傳雲端
+3. 計算個股籌碼集中度下載對應股價
+4. 分析數據之變化
+5. 發送LINE BOT通知
 
 
 ## 本國上市證券
@@ -126,18 +126,48 @@ def get_stock_SRC_(dir,stockid,start,current_date,period_vol,date_size=15,date_s
         Q=A.tail(int(15)).div(1000).values.sum()
         sell_top_data_size=A.head(int(_date_size)).div(1000).values.sum()
         buy_top15_data_size=A.tail(int(_date_size)).div(1000).values.sum()
-
-
 ```
 
-## 分析並取出連續性
+## 分析籌碼連續性
 
+1.採用斜率分析籌碼每日之變化，為觀察斜率連續為正或負特性，透過數學式 $\frac{X}{|X|}$ `df['M20']/abs(df['M20'])`簡化斜率正負(+1 或 -1)；
+2.後續透過(rolling)移動平均方式計算總合 e.g. 若+1連續五次，則表示籌法斜率連續五次為正
 
+```
+# SRC 變化分析
+def SRC_green_red_check(dir,stockid):
+    sqlite_name=dir+str(stockid)+".sqlite"
+    db_handler = sqlite3.connect(sqlite_name)
+
+    cursor = db_handler.cursor()
+    cursor.execute('select * from SRC order by Date asc')
+    # rows = cursor.fetchall()
+    df = pd.DataFrame.from_records(cursor.fetchall(),
+    columns = [desc[0] for desc in cursor.description])
+    df['green_red_Condiction']=df['M20']/abs(df['M20'])#定義正為1 負為-1
+    # 採用累加的方式進行統計 10 與 5 的週期
+    
+    df['GR10']=df['green_red_Condiction'].rolling(window=10,min_periods=10).sum()
+    df['GR5']=df['green_red_Condiction'].rolling(window=5,min_periods=5).sum()
+   
+    # for i in df['green_red_Condiction']:
+    # df.to_csv(str(stockid)+".csv")
+    
+    # -----+++++ GR10 總合為0、GR5 總和為5
+    cond0=df['GR10']>=0
+    cond1=df['GR5']==5
+    cond2=df['GR10']<3
+    # cond1=df['M20']>=-0.03
+    A=df.loc[cond0 & cond1 & cond2 ]
+    db_handler.close()
+#     print(A)
+    return A
+```
 
 
 ## 上傳Google Drive API 啟用方式
 https://d35mpxyw7m7k7g.cloudfront.net/bigdata_1/Get+Authentication+for+Google+Service+API+.pdf
-## LINE BOT
+## 發送LINE BOT通知
 建立LINE BOT
 1. 取得Channel access token 存檔後從程式碼讀取，‵sendMessage()‵進行發送
 2. 加入建置頻道
