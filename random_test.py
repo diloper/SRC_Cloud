@@ -544,11 +544,11 @@ def SRC_notify(oldfilename,df):
         # check if data exist
         if os.path.isfile(oldfilename) :
             old_df=pd.read_csv(oldfilename)
-
+            counter=old_df.shape[0] 
             for row in old_df.itertuples():
                 end_date=getattr(row, 'end_date')
                 socketid=getattr(row, 'socketid')
-
+                
 
                 condition = new_df_A['socketid'] == str(socketid)
                 Q=new_df_A.loc[condition]
@@ -556,12 +556,13 @@ def SRC_notify(oldfilename,df):
                 index_A=Q.loc[Q['end_date']==end_date]
                 if index_A.shape[0]==1:
                     new_df_A=new_df_A.drop(index_A.index.tolist())
-
-            if len(new_df_A) == 0 :
+                    counter=counter-1 
+#            當counter=0 則表示old_df行數全比較完畢        
+            if len(new_df_A) == 0 and counter== 0:
                 print('the same')
                 return False
         print('save file')
-        new_df.to_csv(oldfilename, encoding='utf-8',index=False)
+        df.to_csv(oldfilename, encoding='utf-8',index=False)
         return True
 
 
@@ -631,7 +632,7 @@ def find_SRC_by_condition(dir):
 
     cond2=Evaluate['times']>=0
     # now = datetime.now()
-    now =date.today() - timedelta(days=15)
+    now =date.today() - timedelta(days=60)
     Today = now.strftime("%Y-%m-%d")
     print(Today)
     cond3=Evaluate['end_date']>Today
@@ -647,7 +648,7 @@ def find_SRC_by_condition(dir):
     # G=PR[PR['price_diff']>0.2]
     # print(G.shape[0]/PR.shape[0])
     PR.sort_values(by=['end_date'],inplace=True)
-    return PR.loc[: ,['socketid','end_date']]
+    return PR.loc[: ,['socketid','end_date','end_close']]
 
 
     
@@ -661,9 +662,8 @@ def main():
     oldfilename='SRCresult.csv'
     A=find_SRC_by_condition(dir=dir)
     B=SRC_notify(oldfilename=oldfilename,df=A)
-
+#    C=SRC_notify(oldfilename=A,df=oldfilename)
     print(A)
-
 # In[94]:
 
 
