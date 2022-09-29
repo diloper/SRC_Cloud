@@ -177,7 +177,36 @@ class Google_Driver_API:
                 
                 return file.get('id')
         return None
+		
+		
+	def list_folder_files(self,folder_id):
+      try:
 
+        files = []
+        page_token = None
+        while True:
+          # pylint: disable=maybe-no-member
+          response = self.drive_service.files().list(q="parents in '{}'".format(folder_id),
+                          spaces='drive',
+                          fields='nextPageToken, '
+                              'files(id, name)',
+                          pageToken=page_token).execute()
+          for file in response.get('files', []):
+            # Process change
+            # print(F'Found file: {file.get("name")}, {file.get("id")}')
+          files.extend(response.get('files', []))
+          page_token = response.get('nextPageToken', None)
+          if page_token is None:
+            break
+
+      except HttpError as error:
+        print(F'An error occurred: {error}')
+        files = None
+
+      return files
+
+		
+		
     def search_file(self,name,folder_id=None):
         qurry = {
         'name': "name='"+name+"'"
@@ -340,7 +369,6 @@ if __name__ == '__main__':
 
 
 # In[ ]:
-
 
 
 
