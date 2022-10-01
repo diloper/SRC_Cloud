@@ -234,11 +234,22 @@ def main():
     today = date.today()
 
     d1 = today.strftime("%Y-%m-%d")
+    counter=1
+    while(1):
+        time.sleep(1)
+        counter=counter+1
+        print(counter)
+        resp,date_y=crawl_SRC('2412')
+        if date_y is not False:
+            break
+        if counter>10:
+            break
     print("Today =", d1)
     resp,date_y=crawl_SRC('2412')
     # directory_list=local_folder(str(date_y))
     # last_folder=directory_list.pop()
     # local_files=local_file(last_folder=date_y)
+    print(date_y)
     local_files=local_file(date_y)
     stockid_list=get_stockid('股票','上市認購(售)權證')
 
