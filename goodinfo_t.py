@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import date, timedelta, datetime
 import sqlite3
+import time
 def save2sqlite(dir,stockid,data):
     
     sqlite_name=dir+str(stockid)+".sqlite"
@@ -41,6 +42,7 @@ def get_OHLC_goodinfo_date(stockid,start,end):
     return A
 #  Add referer in http header to get OHLC data
 def get_OHLC_goodinfo(stockid):
+    time.sleep(30)
     my_headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',        'referer': 'https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid)}
     url='https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'
     s = requests.Session()
@@ -103,6 +105,28 @@ def get_OHLC_goodinfo(stockid):
     df['Volume']=df['Volume']*1000
 
     return df
+def retry_download(stockid,counter):
+#     counter=3
+    while counter>0:
+#    if counter>0:
+        df=get_OHLC_goodinfo(stockid)
+        if df is not False:
+            break
+        else:
+            time.sleep(1)#sleep 1 s then retry 
+        counter=counter-1
+    if counter == 0:
+        raise Exception('downlaod fail')
+    return df
+# get last_num
+def get_data_last_row(stockid,last_row):
+    A=retry_download(stockid=stockid,counter=3)    
+    rows=A.shape[0]
+    if last_row>rows:
+        result=A
+    else :
+        result=A.tail(last_row)
+    return result
 def main():
     STOCK_ID=2412
     _start=date(2022,5,24)
@@ -111,6 +135,7 @@ def main():
 
     A=get_OHLC_goodinfo_date(STOCK_ID,start,start)
     print(A.head())
+
 if __name__ == '__main__':
     main()
 
