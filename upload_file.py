@@ -15,6 +15,7 @@ from __future__ import print_function
 import pickle
 import os.path
 import io
+from apiclient import errors
 import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -178,7 +179,33 @@ class Google_Driver_API:
                 return file.get('id')
         return None
 		
-		
+    def search_folders(self,folder_id):
+
+
+
+        Q="mimeType = 'application/vnd.google-apps.folder'\
+        and trashed = false and parents in '{}'".format(folder_id)
+        
+        try:
+
+            files = []
+            page_token = None
+            while True:        
+                response = self.drive_service.files().list(q=Q,spaces='drive',
+                          fields='nextPageToken, '
+                              'files(id, name)',
+                          pageToken=page_token).execute()
+
+                files.extend(response.get('files', []))
+                page_token = response.get('nextPageToken', None)
+                if page_token is None:
+                    break    
+        except errors.HttpError as error:
+             print ('An error occurred: %s' % error)
+             files = None
+
+        return files
+
     def list_folder_files(self,folder_id):
       try:
 
@@ -199,8 +226,8 @@ class Google_Driver_API:
           if page_token is None:
             break
 
-      except HttpError as error:
-        print(F'An error occurred: {error}')
+      except errors.HttpError as error:
+        print ('An error occurred: %s' % error)
         files = None
 
       return files
