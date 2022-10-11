@@ -355,7 +355,27 @@ def Line_agent(condition,message):
 
 
 
-def local_folder(dir_target="./"):
+def local_files_v1(dir_target="./"):
+# 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
+    directory_list = list()
+#     print(dir_target)
+    for root, dirs, files in os.walk(dir_target):
+
+        # if  target!=None and target in dirs:
+        for name in files:
+            
+            combine_name=str(root)+str(name)
+            if dir_target!="./":
+                combine_name=str(name)
+            # print(root)
+            if root != dir_target:
+                continue
+            x = re.search(r"\d{4}\d{2}\d{2}", combine_name)
+            if x is not None:
+                directory_list.append(os.path.join(root, name))
+
+    return directory_list
+def local_folder(dir_target="./",format=None):
 # 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
     directory_list = list()
 #     print(dir_target)
@@ -370,7 +390,6 @@ def local_folder(dir_target="./"):
             # print(root)
             if root != dir_target:
                 continue
-            
             x = re.search(r"\d{4}-\d{2}-\d{2}", combine_name)
             if x is not None:
                 directory_list.append(os.path.join(root, name))
@@ -438,15 +457,22 @@ def upload_agent():
             except Exception as  e:
                 print(e)
 #   local_folder name  ORDER by date DESC
-def delet_folder(remain_num,check_Empty=True,dir_target='./'):
-    directory_list=local_folder(dir_target=dir_target)
+def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
+    if file is True:
+        directory_list=local_files_v1(dir_target=dir_target)
+    else:
+        directory_list=local_folder(dir_target=dir_target)
 #     print(dir_target)
     directory_list.sort(reverse = True)
 #     directory_list.pop(0)
-#     print(directory_list)
+#    print(directory_list)
     del directory_list[0:remain_num]
 #     print(directory_list)
     for path in directory_list:
+     #   if os.path.exists(path) and file == True:
+    	#    os.remove(path)
+         #   continue
+
         if check_Empty == True: 
             directory= os.listdir(path) 
 #         len(directory)=0 表示資料夾內部為空的
@@ -457,6 +483,7 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./'):
             shutil.rmtree(path, ignore_errors=True)
 import Stock_SRC_Small as Stock_Small
 import random_test as my_SRC
+import financing_colab as financing
 oldfilename='SRCresult.csv'
 if __name__ == '__main__':
     # directory_list=local_folder('2020-07-23')
@@ -464,16 +491,21 @@ if __name__ == '__main__':
 #     notify_service(1)
     # argvL=str(sys.argv)
     print ('Argument List:', str(sys.argv))
+
+    delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
     start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    financing.main()
     main()
     upload_agent()
     Stock_Small.main()
     delet_folder(remain_num=1)
     delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
+    delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
     A=my_SRC.find_SRC_by_condition(dir='./small_test/')
     #print(A)
     notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
     #print(notify)
+
     Line_agent(condition=3,message=start_t+str(sys.argv))
     if notify is True:
         Line_agent(condition=4,message=str(A))
