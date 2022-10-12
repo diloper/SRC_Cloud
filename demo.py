@@ -469,9 +469,9 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
     del directory_list[0:remain_num]
 #     print(directory_list)
     for path in directory_list:
-     #   if os.path.exists(path) and file == True:
-    	#    os.remove(path)
-         #   continue
+        if os.path.exists(path) and file == True:
+            os.remove(path)
+            continue
 
         if check_Empty == True: 
             directory= os.listdir(path) 
@@ -482,34 +482,53 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
         else:
             shutil.rmtree(path, ignore_errors=True)
 import Stock_SRC_Small as Stock_Small
-import random_test as my_SRC
 import financing_colab as financing
 oldfilename='SRCresult.csv'
+import random_test as my_SRC
+import logging
+log_dir="log/"
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+    print(log_dir)
+today = date.today().strftime("%Y-%m-%d")
+logging.basicConfig(
+    filename=log_dir+today+'.log', # write to this file
+    filemode='a', # open in append mode
+    format='%(name)s - %(levelname)s - %(message)s'
+    )
+logging.debug("Debug logging test...")
+
+logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.ERROR)
+
 if __name__ == '__main__':
     # directory_list=local_folder('2020-07-23')
     # local_files=local_file('2020-07-23')
 #     notify_service(1)
     # argvL=str(sys.argv)
-    print ('Argument List:', str(sys.argv))
-
-    delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
-    start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    financing.main()
-    main()
-    upload_agent()
-    Stock_Small.main()
-    delet_folder(remain_num=1)
-    delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
-    delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
-    A=my_SRC.find_SRC_by_condition(dir='./small_test/')
-    #print(A)
-    notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
-    #print(notify)
-
-    Line_agent(condition=3,message=start_t+str(sys.argv))
-    if notify is True:
-        Line_agent(condition=4,message=str(A))
-
+    try:
+        print ('Argument List:', str(sys.argv))
+    
+        delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
+        start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        financing.main()
+        main()
+        upload_agent()
+        Stock_Small.main()
+        delet_folder(remain_num=1)
+        delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
+        delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
+        A=my_SRC.find_SRC_by_condition(dir='./small_test/')
+        #print(A)
+        notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
+        #print(notify)
+    
+        Line_agent(condition=3,message=start_t+str(sys.argv))
+        if notify is True:
+            Line_agent(condition=4,message=str(A))
+    except:
+        logging.error("Catch an exception.", exc_info=True)
+        Line_agent(condition=3,message="find logging.error")
 #     notify_service(2)
 #     stockid_list=get_stockid('股票','上市認購(售)權證')
 
