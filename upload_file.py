@@ -213,7 +213,7 @@ class Google_Driver_API:
         page_token = None
         while True:
           # pylint: disable=maybe-no-member
-          response = self.drive_service.files().list(q="parents in '{}'".format(folder_id),
+          response = self.drive_service.files().list(q="parents in '{}'".format(folder_id)+" and trashed = false",
                           spaces='drive',
                           fields='nextPageToken, '
                               'files(id, name)',
