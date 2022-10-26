@@ -244,8 +244,8 @@ def main():
             break
         if counter>10:
             break
-    print("Today =", d1)
-    resp,date_y=crawl_SRC('2412')
+    print("retry conuter=", counter)
+    #resp,date_y=crawl_SRC('2412')
     # directory_list=local_folder(str(date_y))
     # last_folder=directory_list.pop()
     # local_files=local_file(last_folder=date_y)
