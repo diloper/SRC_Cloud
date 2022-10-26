@@ -11,6 +11,9 @@ import pandas as pd
 from datetime import date, timedelta, datetime
 import sqlite3
 import time
+import twse_ohlc 
+
+
 def save2sqlite(dir,stockid,data):
     
     sqlite_name=dir+str(stockid)+".sqlite"
@@ -34,15 +37,26 @@ def save2sqlite(dir,stockid,data):
         data.to_sql("OHLC", db_handler, if_exists='replace',index=False)
     db_handler.close()
 def get_OHLC_goodinfo_date(stockid,start,end):
-    df=get_OHLC_goodinfo(stockid)
+    
+    _end=datetime.strptime(str(end),'%Y-%m-%d')
+    _start=datetime.strptime(str(start),'%Y-%m-%d')
+    
+    _diff_month=twse_ohlc.diff_month(_end,_start)
+    
+    if _diff_month < 15:
+        _start=start.replace("-", "")
+        _end=end.replace("-", "")
+        df=twse_ohlc.get_OHLC_twse_range(stockid=stockid,start=_start,end=_end)
+    else:
+        df=get_OHLC_goodinfo(stockid)
     cond0=df['Date']<= end
     cond1=df['Date']>= start
     # df.loc[start:end]
     A=df.loc[cond0 & cond1]
     return A
 #  Add referer in http header to get OHLC data
-def get_OHLC_goodinfo(stockid):
-    time.sleep(30)
+def get_OHLC_goodinfo(stockid,sleep=30):
+    time.sleep(sleep)
     my_headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',        'referer': 'https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid)}
     url='https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'
     s = requests.Session()
@@ -62,8 +76,14 @@ def get_OHLC_goodinfo(stockid):
                 R.encoding='utf-8'
                 break
     # substring Javascipt with start_index end_index ,then store at data_list
+    
+    # print(type(R))
+    # print(len(R))
+    if len(R.text)<1:
+      return None
     result=R.text
-#     print(result)
+
+    # print(result)
     key_word='RPT_TIME:['
     start_index=result.find(key_word)
 #     start_index=result.find('Records:{RPT_TIME')
@@ -130,11 +150,14 @@ def get_data_last_row(stockid,last_row):
 def main():
     STOCK_ID=2412
     _start=date(2022,5,24)
+    _start2=date(2022,6,24)
     start = _start.isoformat()
-    current_date = (_start+timedelta(days=10)).isoformat()
+    _start2=date(2022,6,24)
+    start2 = _start2.isoformat()
+    current_date = (_start-timedelta(days=60)).isoformat()
 
-    A=get_OHLC_goodinfo_date(STOCK_ID,start,start)
-    print(A.head())
+    A=get_OHLC_goodinfo_date(STOCK_ID,start,start2)
+    print(A)
 
 if __name__ == '__main__':
     main()
