@@ -74,7 +74,7 @@ def get_OHLC_twse_range(stockid=1459,start=20220901,end=20221001):
   for _i in range(_diff_month+1):
     _result=add_month(start,add_month=_i)
     # print(a)
-    _df=pd.concat([_df, get_OHLC_twse(stockid,_result,sleep=2)], ignore_index=True)
+    _df=pd.concat([_df, get_OHLC_twse(stockid,_result,sleep=4)], ignore_index=True)
   # print(_end.isoformat('%Y-%m-%d'))
   # print(_start.isoformat())  
   cond0=_df['Date']<= _end.strftime('%Y-%m-%d')
