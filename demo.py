@@ -246,7 +246,7 @@ def main():
             break
     print("retry conuter=", counter)
     #resp,date_y=crawl_SRC('2412')
-    # directory_list=local_folder(str(date_y))
+    # directory_list=search_tool.local_folder(str(date_y))
     # last_folder=directory_list.pop()
     # local_files=local_file(last_folder=date_y)
     print(date_y)
@@ -351,51 +351,6 @@ def Line_agent(condition,message):
 
 
 
-# In[2]:
-
-
-
-def local_files_v1(dir_target="./"):
-# 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
-    directory_list = list()
-#     print(dir_target)
-    for root, dirs, files in os.walk(dir_target):
-
-        # if  target!=None and target in dirs:
-        for name in files:
-            
-            combine_name=str(root)+str(name)
-            if dir_target!="./":
-                combine_name=str(name)
-            # print(root)
-            if root != dir_target:
-                continue
-            x = re.search(r"\d{4}\d{2}\d{2}", combine_name)
-            if x is not None:
-                directory_list.append(os.path.join(root, name))
-
-    return directory_list
-def local_folder(dir_target="./",format=None):
-# 歷遍當前目錄下的資料夾名稱 符合:2020-01-01此格式
-    directory_list = list()
-#     print(dir_target)
-    for root, dirs, files in os.walk(dir_target):
-
-        # if  target!=None and target in dirs:
-        for name in dirs:
-            
-            combine_name=str(root)+str(name)
-            if dir_target!="./":
-                combine_name=str(name)
-            # print(root)
-            if root != dir_target:
-                continue
-            x = re.search(r"\d{4}-\d{2}-\d{2}", combine_name)
-            if x is not None:
-                directory_list.append(os.path.join(root, name))
-
-    return directory_list
-
 target = r'./older'
 
 
@@ -423,7 +378,7 @@ def upload(D_Handel,folder_id,foldername,file_prex,remove=True):
         
 
 def upload_agent():
-    directory_list=local_folder()
+    directory_list=search_tool.local_folder()
 #     print(directory_list)
     directory_list.sort(reverse = True)
 #     last_folder=directory_list.pop()
@@ -459,9 +414,9 @@ def upload_agent():
 #   local_folder name  ORDER by date DESC
 def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
     if file is True:
-        directory_list=local_files_v1(dir_target=dir_target)
+        directory_list=search_tool.local_files_v1(dir_target=dir_target)
     else:
-        directory_list=local_folder(dir_target=dir_target)
+        directory_list=search_tool.local_folder(dir_target=dir_target)
 #     print(dir_target)
     directory_list.sort(reverse = True)
 #     directory_list.pop(0)
@@ -481,6 +436,7 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
                 os.rmdir(path)
         else:
             shutil.rmtree(path, ignore_errors=True)
+import search_tool
 import Stock_SRC_Small as Stock_Small
 import financing_colab as financing
 oldfilename='SRCresult.csv'
@@ -502,14 +458,13 @@ logging.debug("Debug logging test...")
 logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.ERROR)
 
 if __name__ == '__main__':
-    # directory_list=local_folder('2020-07-23')
+    # directory_list=search_tool.local_folder('2020-07-23')
     # local_files=local_file('2020-07-23')
 #     notify_service(1)
     # argvL=str(sys.argv)
     try:
         print ('Argument List:', str(sys.argv))
     
-        delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
         start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         financing.main()
         main()
