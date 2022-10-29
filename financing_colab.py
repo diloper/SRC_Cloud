@@ -34,7 +34,6 @@ import goodinfo_t
 import upload_file
 import gzip
 import progressbar
-dir="./financing/"
 
 # can't use => "import import goodinfo_t as A"
 
@@ -67,6 +66,7 @@ def get_financing_v1(date='20220104'):
 
 
 def upload_finace_data(date,D_Handel,folder_id):
+    
     dt_obj = datetime.strptime(date,'%Y%m%d')
     yearfolder=str(dt_obj.year)
     # create folder if not exist
@@ -87,7 +87,7 @@ def upload_finace_data(date,D_Handel,folder_id):
         print("date ==0")
         return None
     # print(type(bytes_encoded))
-    filename=dir+str(date)+'.gz'
+    filename="./financing/"+str(date)+'.gz'
     with gzip.open(filename, 'wb') as f:
         f.write(bytes_encoded)
       
@@ -98,6 +98,174 @@ def upload_finace_data(date,D_Handel,folder_id):
         ,folder_id=uploadfolder_id)
 
   #os.remove(filename)
+def readfromsql(dir,stockid,dateformate=False,sql=None):
+
+    price_db_name=dir+str(stockid)+".sqlite"
+    # if os.path.isfile(price_db_name) is not True:
+    #     return
+    db_handler = sqlite3.connect(price_db_name)
+    cursor = db_handler.cursor()
+    cursor.execute('SELECT name FROM  sqlite_master WHERE type ="table" And name = "financing"')
+    rows = cursor.fetchall()
+    if len(rows)>0:
+        if sql is not None:
+            cursor.execute(sql)
+            dfB = pd.DataFrame(cursor.fetchall(), columns=['buy','sell','yesterday_balance',
+                                                       'today_balance','fin_cost',
+                                                       'fin_maintenance_rate','Date','Close'])   
+        else:
+            cursor.execute('SELECT * FROM financing' )
+        # for row in cursor.fetchall():    
+        #     print (row) K_columns=[','buy','sell','yesterday_balance','today_balance','Date']
+            dfB = pd.DataFrame(cursor.fetchall(), columns=['buy','sell','yesterday_balance',
+                                                       'today_balance','fin_cost',
+                                                       'fin_maintenance_rate','Date'])   
+        if(dateformate):
+            dfB['Date'] = pd.to_datetime(dfB.Date)# change the datetime format
+        db_handler.close()
+        return dfB
+    else:
+        db_handler.close()
+        return None
+def readOHCLsql(dir,stockid,sql=None):
+    price_db_name=dir+str(stockid)+".sqlite"
+    # if os.path.isfile(price_db_name) is not True:
+    #     return
+    print(stockid)
+    db_handler = sqlite3.connect(price_db_name)
+    # tat='SELECT OHLC.Date,OHLC.Close,SRC.M20 from OHLC WHERE Date <="'+ str(date) +'"order by Date desc  LIMIT "'+str(boundary)+'"'
+    tat='SELECT OHLC.Date,OHLC.Close from OHLC'
+    # df = pd.read_sql_query('SELECT OHLC.Date,OHLC.Close, SRC.M20 from SRC INNER JOIN OHLC ON SRC.Date = OHLC.Date order by SRC.Date ASC',db_handler)
+    # df['20 Day MA']=df['Close'].rolling(window=20,min_periods=20).mean()
+    dfA = pd.read_sql_query(tat,db_handler)
+    db_handler.close()
+    return dfA
+
+#  download from google drive
+def D_from_drive(date):
+    D_Handel=upload_file.Google_Driver_API()
+    dt_obj = datetime.strptime(str(date),'%Y%m%d')
+    yearfolder=str(dt_obj.year)
+    folder_id=D_Handel.search_folder(name='financing')
+    downloadfolder_id=D_Handel.search_folder(yearfolder,folder_id)
+    if downloadfolder_id is not None:
+        name=str(date)+".gz"
+        file_id=D_Handel.search_file(name,folder_id=downloadfolder_id)
+        if file_id is not None:
+            _IO=D_Handel.downloadFile(file_id=file_id,local_filepath=None,IO=True)
+            f=gzip.decompress(_IO)
+            s = f.decode('UTF-8')
+            return s
+    return None
+
+def get_financing_v2(date,stockid):
+#     local file
+    try:
+        dt_obj = datetime.strptime(str(date),'%Y%m%d')
+        yearfolder=str(dt_obj.year)
+        file_path='./financing/'+date+'.gz'
+
+        if os.path.isfile(file_path):
+
+            with gzip.open(file_path, 'rb') as f:
+                file_content = f.read()
+                A = file_content.decode('UTF-8')
+        else: 
+            A=D_from_drive(date)
+
+        result=A
+
+        y = json.loads(result)
+    except:
+        print(result)
+        return None
+    df = pd.DataFrame (y['data'], columns = ['股票代號', '股票名稱', '買進', '賣出', '現金償還', '前日餘額', '今日餘額', '限額', '買進V', '賣出V', '現券償還', '前日餘額V', '今日餘額V', '限額', '資券互抵', '註記'])
+
+    del_target=[ '股票名稱', '現金償還','買進V', '賣出V', '現券償還', '前日餘額V', '今日餘額V', '限額', '資券互抵', '註記']
+
+    for i in del_target:
+        del df[i]
+    G=df.query('股票代號 == "'+stockid+'"')
+    if G.shape[0] == 0:
+        return None
+    return G
+_BN=120
+# 列出 之前N筆資料
+def find_BN_OHCL(stockid,date,n):
+    A=goodinfo_t.get_OHLC_goodinfo(stockid)
+
+    df=A
+    # df.set_index('Date')
+
+    cond0=df['Date'] == str(date)
+    # cond1=df['Date']>= start
+    # df.loc[start:end]
+    x=df.loc[cond0 ].index[0]
+    if (x-n)<0:
+        return None
+    
+    return df.iloc[x-n:x]
+def update_financingsql(dir,stockid):
+# downlaod / update new data
+
+    dfA=readOHCLsql(dir,stockid)
+    dfB=readfromsql(dir,stockid)
+    find_BN=False
+    Adf=None
+    _columns=['股票代號','買進','賣出','前日餘額','今日餘額','Date']
+    K_columns=['stockid','buy','sell','yesterday_balance','today_balance','Date']
+    if dfB is not None and dfA.shape[0]>0: #     if financing table is exist
+#         dfA.replace({'-':''}, regex=True,inplace=True)
+        df_1notin2 = dfA[~(dfA['Date'].isin(dfB['Date']) )].reset_index(drop=True)
+#         print(df_1notin2)
+        if df_1notin2.shape[0] < 1:
+            return 0
+        _sql='select financing.* , OHLC.Close from  financing join OHLC  on OHLC.date=financing.date  WHERE financing.date < "'+str(df_1notin2['Date'][0])+'" order by  financing.date desc limit 1'
+
+#         print(str(df_1notin2['Date'][0]))
+        G=readfromsql(dir,stockid,sql=_sql)
+        Adf = pd.DataFrame(G)
+
+
+    else:
+        df_1notin2=dfA
+#         print(df_1notin2['Date'][0])
+        tmp=find_BN_OHCL(stockid,df_1notin2['Date'][0],_BN)
+        df_1notin2=pd.concat([tmp.loc[:,['Date','Close']],df_1notin2]).reset_index(drop=True)
+        find_BN=True
+    dfG = pd.DataFrame(columns=_columns)
+   
+
+    for index in range(len(df_1notin2)):
+        date=df_1notin2['Date'][index]
+#         print(date)
+        row=get_financing_v2(date=date.replace("-", ""),stockid=stockid)# convert Y-M-D to YMD
+        if row is not None:
+            row.reset_index(drop=True,inplace=True)
+            row['Date'] = date
+            row['Close']=df_1notin2['Close'][index]
+    #         print(row)
+            dfG=pd.concat([dfG, row])
+#         else:
+#             print('cant find'+str(date))
+            
+            
+
+    if  dfG.shape[0]>0:
+        dfH=dfG.drop(columns=['股票代號'])
+        dfH.rename(columns = {'買進' :'buy','賣出':'sell', '前日餘額':'yesterday_balance','今日餘額':'today_balance'}, inplace = True)
+        
+        if Adf is not None:
+            dfH=pd.concat([Adf,dfH]).reset_index(drop=True)
+
+        K=fin_maintenance_rate(dfH,find_BN)
+        
+        K.drop(['Close'], axis=1,inplace=True)
+
+        savetosql(dir,stockid,K)
+    else:
+        print('cant find financing'+str(stockid))
+
 import search_tool
 dirp='small_test'
 import download_SRC as SRCtool
@@ -106,7 +274,7 @@ def updatefinancingsqlv2():
     for item in progressbar.progressbar(A):
         try:
             print(item[0])
-            update_financingsql(dir,stockid=item[0])
+            update_financingsql(dir='./small_test/',stockid=item[0])
         except Exception as e: 
             print("except"+item[0])
             print(e)
@@ -179,4 +347,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #updatefinancingsqlv2()
+    updatefinancingsqlv2()
