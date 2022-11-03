@@ -38,18 +38,19 @@ import progressbar
 # can't use => "import import goodinfo_t as A"
 
 def get_financing_v1(date='20220104'):
-    sleep(20)
+    sleep(5)
     my_headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'
                  }
     #     url='https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'
     url='https://www.twse.com.tw/exchangeReport/MI_MARGN?response=json&date='+str(date) +'&selectType=ALL'
+    print(url)
     s = requests.Session()
     try:
 
-        Resp=s.post(url,headers =my_headers)
-        sleep(0.15)
+        Resp=s.get(url)
+        
         Resp.encoding =  'utf-8' #for chinese encode
-        # print(Resp.text)
+        #print(Resp.text)
         # parse Resp.text:
         if len(Resp.text)<1:
             print("data size <0")
@@ -91,7 +92,7 @@ def upload_finace_data(date,D_Handel,folder_id):
     with gzip.open(filename, 'wb') as f:
         f.write(bytes_encoded)
       
-    file_id=D_Handel.search_file(name=filename,folder_id=uploadfolder_id)
+    file_id=D_Handel.search_file(name=str(date)+'.gz',folder_id=uploadfolder_id)
     if file_id is None:
         D_Handel.uploadFile(filename=str(date)+'.gz',filepath=filename
         ,mimetype="application/gzip"
@@ -305,7 +306,8 @@ def main():
 
 
     print(start)
-    A=goodinfo_t.get_OHLC_goodinfo_date(STOCK_ID,start,current_date)
+    A=goodinfo_t.get_OHLC_goodinfo_date(STOCK_ID,start,current_date,sleep=10)
+    A['Date'].to_csv(index=False)
 #     print(A)
     A.replace({'-':''}, regex=True,inplace=True)
     D_Handel=upload_file.Google_Driver_API()
@@ -330,12 +332,14 @@ def main():
 #    filesdf.replace({'.gz':''}, regex=True,inplace=True)
 #    
     t2=_df['Date'].tolist()
-    print(t2)
+    #print(t2)
     t1=A['Date'].tolist()
-    # R = pd.DataFrame(u)
+    #df3 = pd.concat([A, _df], ignore_index=True).drop_duplicates(['Date', 'Date'], keep='last') 
+    # R = pd.DataFrame(u)a
+    #print(df3)
     T=list(set(t1) - set(t2))
     # R.drop_duplicates(inplace=True)
-    print(T)
+    #print(T)
     for item in progressbar.progressbar(T):
         print(item)
         upload_finace_data(item,D_Handel,folder_id)
@@ -347,4 +351,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-    updatefinancingsqlv2()
+    #get_financing_v1(20221101)
+    #updatefinancingsqlv2()
