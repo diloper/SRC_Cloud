@@ -254,6 +254,14 @@ def Remove_OHLC_SRC_(dir,stockid,day_before):
     dropTableStatement='DELETE FROM OHLC WHERE Date < "'+d_str+'"'
     cursor.execute(dropTableStatement)
     
+    # 檢查financing 表是否存在            
+    cursor.execute('SELECT name FROM  sqlite_master WHERE type ="table" And name="financing"')
+    _result = cursor.fetchall()
+    if len(_result)==0:
+        dropTableStatement='DELETE FROM financing WHERE Date < "'+d_str+'"'
+        cursor.execute(dropTableStatement)
+    
+    
     query='SELECT name FROM  sqlite_master WHERE type ="table" And name REGEXP "^[0-9\-]+$" EXCEPT select Date from OHLC'
     # query='select Date from OHLC WHERE OHLC.Date > (SELECT name FROM  sqlite_master WHERE type ="table" And name REGEXP "^[0-9\-]+$" ORDER BY name DESC limit 1)'
     df=pd.read_sql(query, db_handler)
