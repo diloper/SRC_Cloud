@@ -36,7 +36,7 @@ def save2sqlite(dir,stockid,data):
     else:
         data.to_sql("OHLC", db_handler, if_exists='replace',index=False)
     db_handler.close()
-def get_OHLC_goodinfo_date(stockid,start,end):
+def get_OHLC_goodinfo_date(stockid,start,end,sleep=30):
     
     _end=datetime.strptime(str(end),'%Y-%m-%d')
     _start=datetime.strptime(str(start),'%Y-%m-%d')
@@ -48,7 +48,7 @@ def get_OHLC_goodinfo_date(stockid,start,end):
         _end=end.replace("-", "")
         df=twse_ohlc.get_OHLC_twse_range(stockid=stockid,start=_start,end=_end)
     else:
-        df=get_OHLC_goodinfo(stockid)
+        df=get_OHLC_goodinfo(stockid,sleep)
     cond0=df['Date']<= end
     cond1=df['Date']>= start
     # df.loc[start:end]
