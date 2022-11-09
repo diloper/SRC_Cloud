@@ -7,7 +7,7 @@ import sqlite3
 from datetime import date, timedelta, datetime
 import re
 import pandas as pd
-
+import search_tool
 import os
 import read_file_analyze as ka
 import download_SRC as SRCtool
@@ -564,10 +564,20 @@ def main():
             file_df=file_df.append({'name': item,'date':d1}, ignore_index=True)
     if '-p' in input:
 	    print_src=True
-    for row in file_df.itertuples():
+    lst =search_tool.get_stockid('股票','上市認購(售)權證')
+    isin_df = pd.DataFrame(lst,columns =['stockid'])
+    print(isin_df.head())
+    #for col in isin_df.columns:
+    #    print(col)
+    isin_df['num_stockid']=isin_df['stockid'].str.extract(r"^([^\s]*)(?=\s)")
+    #print(isin_df)  
+    inner_df = file_df.merge(isin_df,  left_on='name', right_on='num_stockid', how='inner', indicator=True)
+    print(inner_df)
+    print(file_df.shape[0])
+    for row in inner_df.itertuples():
 
         item=getattr(row, 'name')
-#        print(stockid)
+        print(item)
 #    for index,_item in file_df.iterrows():
 #        item=int(_item[0])
         if print_src:
