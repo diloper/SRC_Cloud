@@ -22,7 +22,7 @@
 #先進行少量驗證
 #(https://www.twse.com.tw/exchangeReport/MI_MARGN?response=json&date=20220104&selectType=ALL)資料最早可追朔2016年
 #將 2016年至今的資料 下載存至DB
-
+import numpy as np
 import requests
 import pandas as pd
 from datetime import date, timedelta, datetime
@@ -66,7 +66,7 @@ def get_financing_v1(date='20220104'):
     return Resp
 
 
-def upload_finace_data(date,D_Handel,folder_id):
+def upload_finace_data(date,D_Handel,folder_id,skip_local_download=False):
     
     dt_obj = datetime.strptime(date,'%Y%m%d')
     yearfolder=str(dt_obj.year)
@@ -74,23 +74,26 @@ def upload_finace_data(date,D_Handel,folder_id):
     uploadfolder_id=D_Handel.search_folder(yearfolder,folder_id)
     if uploadfolder_id is None:
         uploadfolder_id=D_Handel.createFolder(yearfolder,folder_id)
-
-    Res=get_financing_v1(date)
-    bytes_encoded = Res.text.encode(encoding='utf-8')
-#     check if data >0
-    dictx = json.loads(Res.text)
-    train = pd.DataFrame.from_dict(dictx, orient='index')
-    train.reset_index(level=0, inplace=True)
-    cond0=train['index']== 'data'
-    # df.loc[start:end]
-    A=train.loc[cond0 ]
-    if len(A.iat[0, 1]) <1:
-        print("date ==0")
-        return None
-    # print(type(bytes_encoded))
+        
     filename="./financing/"+str(date)+'.gz'
-    with gzip.open(filename, 'wb') as f:
-        f.write(bytes_encoded)
+    if skip_local_download is False:
+        Res=get_financing_v1(date)
+        bytes_encoded = Res.text.encode(encoding='utf-8')
+    #     check if data >0
+        dictx = json.loads(Res.text)
+        train = pd.DataFrame.from_dict(dictx, orient='index')
+        train.reset_index(level=0, inplace=True)
+        cond0=train['index']== 'data'
+        # df.loc[start:end]
+        A=train.loc[cond0 ]
+        if len(A.iat[0, 1]) <1:
+            print("date ==0")
+            return None
+        # print(type(bytes_encoded))
+      
+#        filename="./financing/"+str(date)+'.gz'
+        with gzip.open(filename, 'wb') as f:
+            f.write(bytes_encoded)
       
     file_id=D_Handel.search_file(name=str(date)+'.gz',folder_id=uploadfolder_id)
     if file_id is None:
@@ -206,6 +209,65 @@ def find_BN_OHCL(stockid,date,n):
         return None
     
     return df.iloc[x-n:x]
+# flag is True return back half value
+def fin_maintenance_rate(df,flag):
+    df.replace({',':''}, regex=True,inplace=True)
+    df = df.astype({'yesterday_balance':'float'})
+    df = df.astype({'buy':'float'})
+    # df = df.astype({'financing':'float'})
+    # 設定初始值
+    
+    # df['fin_cost'][0]=df["Close"][0] 會觸發SettingWithCopyWarning
+    if flag:
+        df['fin_cost']= np.nan
+        df.loc[0:1,['fin_cost']]=df["Close"][0]
+
+        
+    df.reset_index(inplace=True)
+    df.drop(['index'], axis=1,inplace=True)
+    for i in range(len(df)-1):
+        fin_cost=(df["buy"][i+1]*df["Close"][i+1]+df["fin_cost"][i]*df["yesterday_balance"][i+1])/(df["buy"][i+1]+df["yesterday_balance"][i+1])
+        fin_maintenance_rate=df["Close"][i+1]/(np.round(fin_cost,4)*0.6)*100
+        df.loc[i+1:i+2,"fin_cost"]=np.round(fin_cost,4)
+        df.loc[i+1:i+2,"fin_maintenance_rate"]=np.round(fin_maintenance_rate,4)
+    if flag:
+        return df.loc[len(df)/2:len(df)-1]
+    return df.loc[1:len(df)-1]
+
+def savetosql(dir,stockid,dfH):
+#  K_columns=['stockid','buy','sell','yesterday_balance','today_balance','Date']
+    price_db_name=dir+str(stockid)+".sqlite"
+    # if os.path.isfile(price_db_name) is not True:
+    #     return
+    db_handler = sqlite3.connect(price_db_name)
+    cursor = db_handler.cursor()
+    cursor.execute('CREATE TABLE IF NOT EXISTS "financing"      (`buy` REAL  NOT NULL,`sell` REAL NOT NULL,    `yesterday_balance`INTEGER NOT NULL,`today_balance`INTEGER NOT NULL,    `fin_cost`REAL NOT NULL,`fin_maintenance_rate`REAL NOT NULL,    `Date`TEXT  PRIMARY KEY NOT NULL)')
+#     cursor.execute('SELECT name FROM  sqlite_master    WHERE type ="table" And name = "financing"')
+#     rows = cursor.fetchall()
+#     if len(rows)>0:
+#     dfH.to_sql('financing', db_handler, if_exists='append', index = False)
+#     else:
+    try:
+        
+        sql=list(dfH.columns.values)
+        columan=""
+        values=""
+        for i in range(len(sql)):
+            columan=columan+',"'+sql[i]+'"'
+            values=values+",?"
+#         print(columan[1:len(columan)])
+#         print(values[1:len(values)])
+#         print(dfH.values.tolist())
+#         """Date	buy	fin_cost	fin_maintenance_rate	sell	today_balance	yesterday_balanceinsert into XXXXXXXXXXXX("XXXXXXXXXX", "XXXXXXXXX", "XXXXXXXXXXX") values(?,?,?)"""
+        cursor.executemany('insert into financing ('+columan[1:len(columan)]+') values ('+values[1:len(values)]+')', dfH.values.tolist())
+#         cursor.executemany('insert into financing   values (?,?,?,?,?,?,?)', dfH.values.tolist())
+        db_handler.commit()
+    except Exception as E:
+        print('Error : ', E)
+        db_handler.close()
+#         dfH.to_sql('financing', db_handler, if_exists='replace', index = False)
+    db_handler.close()
+
 def update_financingsql(dir,stockid):
 # downlaod / update new data
 
@@ -291,14 +353,22 @@ def main():
     
     _list=search_tool.local_files_v1(dir_target="financing",reg="\d{4}\d{2}\d{2}.gz")
     _list.sort(reverse = False)
-    _df = pd.DataFrame(_list,columns=["Date"])
-    _df = _df.replace('financing/','', regex=True)
-    _df = _df.replace('.gz','', regex=True)
-    #print(_df)
+    dir_df = pd.DataFrame(_list,columns=["Date"])
+
+    if os.name == 'nt':
+        dir_df = dir_df.replace('financing','', regex=True)
+        dir_df = dir_df.replace(to_replace= r'\\', value= '', regex=True)
+    else:
+        dir_df = dir_df.replace('financing/','', regex=True)
+    dir_df = dir_df.replace('.gz','', regex=True)
+    #print(dir_df)
     current_date = today.isoformat()
     if len(_list)>0:
-        dt_obj = datetime.strptime(str(_df['Date'].iloc[0]),'%Y%m%d')
-        yearfolder=str(dt_obj.year)
+        result =str(dir_df['Date'].iloc[0])
+#        print(result)
+        dt_obj = datetime.strptime(result,'%Y%m%d')
+        
+#        yearfolder=str(dt_obj.year)
         start=dt_obj.strftime("%Y-%m-%d")
 
     print(current_date)
@@ -306,13 +376,20 @@ def main():
 
 
     print(start)
-    A=goodinfo_t.get_OHLC_goodinfo_date(STOCK_ID,start,current_date,sleep=10)
-    A['Date'].to_csv(index=False)
-#     print(A)
-    A.replace({'-':''}, regex=True,inplace=True)
+
     D_Handel=upload_file.Google_Driver_API()
     folder_id=D_Handel.search_folder(name='financing')
-#    a_folder_id=D_Handel.search_folders(folder_id=folder_id)
+
+
+    a_folder_id=D_Handel.search_folders(folder_id=folder_id)
+    g_folder = pd.DataFrame(a_folder_id,columns=["id","name"])
+    g_folder.sort_values(by=['name'],inplace=True,ascending=False)
+    
+#    print(str(dt_obj.strftime("%Y%m%d")))
+    cond1=g_folder['name']>= str(dt_obj.year)
+    # df.loc[start:end]
+    g_folder=g_folder.loc[cond1]
+    
     
 
 #    filesdf = pd.DataFrame(files)
@@ -320,21 +397,34 @@ def main():
  #    retrive folder_id and get files   
 #   使用找出file extension gz，再用反向比較
 #    K_folderid=filesdf[~filesdf['name'].str.contains(r'gz', regex=True, na=False)]
-#    for _folder_id in a_folder_id:
-#        print(_folder_id["id"])
-#        a_files=D_Handel.list_folder_files(_folder_id["id"])
-#        if a_files is not None:
-#            tmp_list.extend(a_files)
+ 
+
+    for index, g_folder_id in g_folder.iterrows():
+#        print(g_folder_id["name"])
+        a_files=D_Handel.list_folder_files(g_folder_id["id"])
+        if a_files is not None:
+            tmp_list.extend(a_files)
+    
+    
+    filesdf = pd.DataFrame(tmp_list) 
+    
+    filesdf.replace({'.gz':''}, regex=True,inplace=True)
+#    df3 = pd.concat([dir_df, filesdf], ignore_index=True).drop_duplicates(['Date', 'name'], keep='first') 
+#    t3=filesdf['name'].tolist()
+    left_only = dir_df.merge(filesdf,  left_on='Date', right_on='name', how='left', indicator=True)
+    left_only=left_only.loc[left_only['_merge']=='left_only']
+    
+
+    
+    A=goodinfo_t.get_OHLC_goodinfo_date(STOCK_ID,start,current_date,sleep=10)
+#    A['Date'].to_csv(index=False)
+#     print(A)
+    A.replace({'-':''}, regex=True,inplace=True)
 #    
-#    
-#    filesdf = pd.DataFrame(tmp_list) 
-#    
-#    filesdf.replace({'.gz':''}, regex=True,inplace=True)
-#    
-    t2=_df['Date'].tolist()
+    t2=dir_df['Date'].tolist()
     #print(t2)
     t1=A['Date'].tolist()
-    #df3 = pd.concat([A, _df], ignore_index=True).drop_duplicates(['Date', 'Date'], keep='last') 
+    #df3 = pd.concat([A, dir_df], ignore_index=True).drop_duplicates(['Date', 'Date'], keep='last') 
     # R = pd.DataFrame(u)a
     #print(df3)
     T=list(set(t1) - set(t2))
@@ -343,13 +433,17 @@ def main():
     for item in progressbar.progressbar(T):
         print(item)
         upload_finace_data(item,D_Handel,folder_id)
+
+    for index, idx in left_only.iterrows():
+        print(idx['Date'])
+        upload_finace_data(idx['Date'],D_Handel,folder_id,skip_local_download=True)
     updatefinancingsqlv2()
     
-    
+
 
 
 
 if __name__ == '__main__':
     main()
     #get_financing_v1(20221101)
-    #updatefinancingsqlv2()
+#    updatefinancingsqlv2()
