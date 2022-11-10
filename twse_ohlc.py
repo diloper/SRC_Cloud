@@ -56,6 +56,7 @@ def get_OHLC_twse(stockid,date='20220104',sleep=5):
     # print(chinese_date)
     _df['Date'].replace({str(chinese_date):str(_start.year)}, regex=True,inplace=True)
     for item in change:
+      _df[item].replace({',':''}, regex=True,inplace=True)
       _df[[item]] = _df[[item]].apply(pd.to_numeric)
 
     _df['Volume']=_df['Volume'].round(decimals = -3)
@@ -111,6 +112,7 @@ def add_month(_mydate,add_month=1):
 
 
 def main():
+    get_OHLC_twse(stockid="3008",date='20221109',sleep=1)
     a=1
     for i in range(10000):
     # try:
@@ -127,6 +129,6 @@ def main():
     # except Exception as e:
     #     print(e)
     #     a=a+10
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+     main()
 
