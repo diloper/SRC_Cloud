@@ -371,9 +371,9 @@ def upload_agent():
             except Exception as  e:
                 print(e)
 #   local_folder name  ORDER by date DESC
-def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False):
+def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False,reg=r"\d{4}\d{2}\d{2}"):
     if file is True:
-        directory_list=search_tool.local_files_v1(dir_target=dir_target)
+        directory_list=search_tool.local_files_v1(dir_target=dir_target,reg=reg)
     else:
         directory_list=search_tool.local_folder(dir_target=dir_target)
 #     print(dir_target)
@@ -416,6 +416,7 @@ logging.debug("Debug logging test...")
 
 logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.ERROR)
 
+logging.getLogger('googleapiclient.discovery').setLevel(logging.CRITICAL)
 if __name__ == '__main__':
     # directory_list=search_tool.local_folder('2020-07-23')
     # local_files=local_file('2020-07-23')
@@ -432,6 +433,7 @@ if __name__ == '__main__':
         delet_folder(remain_num=1)
         delet_folder(remain_num=100,dir_target='./older/',check_Empty=False)
         delet_folder(remain_num=240,dir_target='./financing/',check_Empty=False,file=True)
+        delet_folder(remain_num=20,dir_target='./log/',check_Empty=False,file=True,reg=r"\d{4}-\d{2}-\d{2}")
         A=my_SRC.find_SRC_by_condition(dir='./small_test/')
         #print(A)
         notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
