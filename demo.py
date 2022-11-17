@@ -423,6 +423,8 @@ if __name__ == '__main__':
 #     notify_service(1)
     # argvL=str(sys.argv)
     try:
+
+
         print ('Argument List:', str(sys.argv))
     
         start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -436,9 +438,17 @@ if __name__ == '__main__':
         delet_folder(remain_num=20,dir_target='./log/',check_Empty=False,file=True,reg=r"\d{4}-\d{2}-\d{2}")
         A=my_SRC.find_SRC_by_condition(dir='./small_test/')
         #print(A)
+
+        G=my_SRC.show_over_num_result(num=10)
+        if G.shape[0] > 0: 
+        #G.to_csv(path_or_buf="financing_csv",index=False)
+            diff_flag=my_SRC.diff_file(G,"financing.csv")
+            if diff_flag is False or diff_flag is None:	
+                Line_agent(condition=4,message=str(G))
+
         notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
         #print(notify)
-    
+        #Line_agent(condition=4,message=str(G))
         Line_agent(condition=3,message=start_t+str(sys.argv))
         if notify is True:
             Line_agent(condition=4,message=str(A))
