@@ -22,8 +22,14 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from apiclient.http import MediaFileUpload
 from googleapiclient.http import MediaIoBaseDownload
+
+from urllib.error import HTTPError
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/drive']
+#SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/drive.file','https://www.googleapis.com/auth/spreadsheets.readonly']
+#SCOPES = ['https://www.googleapis.com/auth/drive.file','https://www.googleapis.com/auth/drive.resource']
+#SAMPLE_SPREADSHEET_ID = '1_NwoXo-M2x250v3Ky7ZPG_pgKk0XOLZP2q8C-xvw6Tc'
+#SAMPLE_RANGE_NAME = 'financing!A2:D'
 
 class Google_Driver_API:
 #     self.drive_service
@@ -53,7 +59,29 @@ class Google_Driver_API:
                 pickle.dump(creds, token)
         # create credentials with google  tutorial
         self.drive_service= build('drive', 'v3', credentials=creds)
+        self.sheet_service= build('sheets', 'v4', credentials=creds)
      
+    def getSheetvalue(self,SAMPLE_SPREADSHEET_ID='1_NwoXo-M2x250v3Ky7ZPG_pgKk0XOLZP2q8C-xvw6Tc',SAMPLE_RANGE_NAME='financing!A2:D'):
+        try:
+            sheet = self.sheet_service.spreadsheets()
+            result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
+                                        range=SAMPLE_RANGE_NAME).execute()
+            values = result.get('values', [])
+    
+            if not values:
+                print('No data found.')
+                return None
+    
+#            print('Name, Major:')
+#            for row in values:
+#                # Print columns A and E, which correspond to indices 0 and 4.
+#    #            print('%s, %s' % (row[0], row[4]))
+#                print('%s' % (row))
+              
+        except HTTPError as err:
+            print(err)
+        return values
+        
     def listFiles(self,size,auto_nextPage=False):
         page_token = None
         while True:
@@ -351,16 +379,21 @@ def main():
 
 
     D_Handel=Google_Driver_API()
-    D_Handel.get_stockid('股票','上市認購(售)權證')
-    filename='test.gz'
-    filepath='./2020-07-02/'
-    foldername='python create'
-    folderlist=[]
-    folderlist.append('test1')
-    folderlist.append('test2')
-    folderlist.append('test3')
-    local_file_path=filepath+filename
-    filenametype='.gz'
+    A=D_Handel.getSheetvalue()
+#    print(A)
+    print(type(A))
+#    D_Handel.get_stockid('股票','上市認購(售)權證')
+#    filename='test.gz'
+#    filepath='./2020-07-02/'
+#    foldername='python create'
+#    folderlist=[]
+#    folderlist.append('test1')
+#    folderlist.append('test2')
+#    folderlist.append('test3')
+#    local_file_path=filepath+filename
+#    filenametype='.gz'
+    
+
 
     # D_Handel.Uploadfile_Agent(pre_folder=folderlist
     #                  ,filename=filename
