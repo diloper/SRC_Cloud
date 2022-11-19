@@ -555,25 +555,33 @@ def main():
     
     file_df.sort_values(by="date",ascending=True,inplace=True)
     data = pd.read_csv(dir+"B.csv", delimiter=',')
+    data['stockid'] = data['stockid'].astype("str")
+    
     for row in data.itertuples():
         item=getattr(row, 'stockid')
         G1=file_df.query('name == "'+str(item)+'"')
 #        print(len(G1.index))
         if len(G1.index) ==0:
-            print(item)
+#            print(item)
             file_df=file_df.append({'name': item,'date':d1}, ignore_index=True)
     if '-p' in input:
 	    print_src=True
+    
+    print(data.dtypes)
     lst =search_tool.get_stockid('股票','上市認購(售)權證')
     isin_df = pd.DataFrame(lst,columns =['stockid'])
-    print(isin_df.head())
+#    print(isin_df.head())
+    print(isin_df.dtypes)
     #for col in isin_df.columns:
     #    print(col)
     isin_df['num_stockid']=isin_df['stockid'].str.extract(r"^([^\s]*)(?=\s)")
     #print(isin_df)  
+    file_df['name'] = file_df['name'].astype("str")
+    isin_df['num_stockid']=isin_df['num_stockid'].astype("str")
     inner_df = file_df.merge(isin_df,  left_on='name', right_on='num_stockid', how='inner', indicator=True)
-    print(inner_df)
-    print(file_df.shape[0])
+#    Linner_df = data.merge(isin_df,  left_on='stockid', right_on='num_stockid', how='left', indicator=True)
+    print(inner_df.shape[0])
+#    print(file_df.shape[0])
     for row in inner_df.itertuples():
 
         item=getattr(row, 'name')
