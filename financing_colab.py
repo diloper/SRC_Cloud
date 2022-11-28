@@ -324,6 +324,8 @@ def update_financingsql(dir,stockid):
         K=fin_maintenance_rate(dfH,find_BN)
         
         K.drop(['Close'], axis=1,inplace=True)
+        K['fin_cost'] = K['fin_cost'].fillna(0)
+        K['fin_maintenance_rate'] = K['fin_maintenance_rate'].fillna(0)
 
         savetosql(dir,stockid,K)
     else:
