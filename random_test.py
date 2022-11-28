@@ -752,7 +752,9 @@ def filter_financing(duration=10,gap=0.06):
     a.drop(columns=['index_shift', 'SING','index','F_10','F_cost_10','F_10_diff','index_diff'],inplace=True)
     condA=a['Date'] >= frome_date.strftime('%Y-%m-%d')
     condB=a['Date'] <= today.strftime('%Y-%m-%d')
-    result=a[condA & condB]
+    condC=a['fin_maintenance_rate']>90
+    condD=a['fin_maintenance_rate']<130
+    result=a[condA & condB & condC &  condD]
     result=result.copy()
     result['stockid']=str(stock_id[0])
     # print(result)
@@ -814,11 +816,12 @@ def diff_file(G,filename):
 dir='./small_test/'
 def main():
     oldfilename='SRCresult.csv'
-    A=find_SRC_by_condition(dir=dir)
-    B=SRC_notify(oldfilename=oldfilename,df=A)
+    #A=find_SRC_by_condition(dir=dir)
+    #B=SRC_notify(oldfilename=oldfilename,df=A)
 #    C=SRC_notify(oldfilename=A,df=oldfilename)
-    print(A)
-    a=show_over_num_result(num=10)
+    #print(A)
+    a=show_over_num_result(num=30)
+    print(a)
 # In[94]:
 
 if __name__ == '__main__':
