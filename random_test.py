@@ -671,18 +671,18 @@ def find_SRC_by_condition(dir):
 
 
 # 
-def financing_target(stockid,gap=0.06):
+def financing_target(stockid,gap=0.06,window_s=10):
   # stockid='2344'
 
   _sql='select financing.date,financing.fin_cost,financing.fin_maintenance_rate,OHLC.Close from financing join OHLC on OHLC.date=financing.date '
   # _sql='select * from OHLC'
   G=readfromsql_v2(dir,str(stockid),sql=_sql)
-  if G is None:
+  if G is None or G.shape[0] < 1:
     return None
   #F_10 days moveing average
-  G['F_10']=G['fin_maintenance_rate'].rolling(window=10,min_periods=10).mean()
+  G['F_10']=G['fin_maintenance_rate'].rolling(window=window_s,min_periods=window_s).mean()
   #
-  G['F_cost_10']=G['fin_cost'].rolling(window=10,min_periods=10).mean()
+  G['F_cost_10']=G['fin_cost'].rolling(window=window_s,min_periods=window_s).mean()
   G['F_10_diff']=(G['F_10']-G['fin_maintenance_rate'])/G['fin_maintenance_rate']
   # today=
   G.loc[G['F_10_diff']>gap, 'SING'] = 1 
@@ -735,7 +735,7 @@ def financing_target(stockid,gap=0.06):
   target=target[target['m_time']>0]
   return target
   # type(pagination['index'])
-def filter_financing(duration=10,gap=0.06):
+def filter_financing(duration=10,gap=0.06,window=10):
   today = date.today()
   # print("Today's date:", str(today))
   frome_date = today-timedelta(days=duration)
@@ -746,7 +746,8 @@ def filter_financing(duration=10,gap=0.06):
   A=local_file(dir)
   for stock_id in A:
     # print(stock_id[0])
-    a=financing_target(str(stock_id[0]),gap)
+#financing_target(stockid,gap=0.06,window_s=10)
+    a=financing_target(str(stock_id[0]),gap,window_s=window)
     if a is None:
       continue
     a.drop(columns=['index_shift', 'SING','index','F_10','F_cost_10','F_10_diff','index_diff'],inplace=True)
@@ -779,13 +780,13 @@ def readfromsql_v2(dir,stockid,dateformate=False,sql=None):
 
     db_handler.close()
     return df_mysql
-def show_over_num_result(num=10):
+def show_over_num_result(num=10,window=10):
   maxtime=10
   t = pd.DataFrame()
   gap=0.1
   while(1):
 
-    result=filter_financing(duration=10,gap=gap)
+    result=filter_financing(duration=10,gap=gap,window=window)
     # result=result.copy()
     t=t.append(result, ignore_index=True)
     t.drop_duplicates(inplace=True)
@@ -820,7 +821,7 @@ def main():
     #B=SRC_notify(oldfilename=oldfilename,df=A)
 #    C=SRC_notify(oldfilename=A,df=oldfilename)
     #print(A)
-    a=show_over_num_result(num=30)
+    a=show_over_num_result(num=30,window=20)
     print(a)
 # In[94]:
 
