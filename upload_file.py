@@ -346,7 +346,7 @@ class Google_Driver_API:
             print(e)
             
             
-    def set_shard(self,file_id):
+    def set_share(self,file_id):
         #print('a')
         request_body = {
             'role': 'reader',
@@ -364,11 +364,12 @@ class Google_Driver_API:
         folder_id=self.search_folder(name=foldername)
         file_id=self.search_file(name=filename,folder_id=folder_id)
         print(file_id)
-        file_id=self.updateFile(file_id=file_id,filepath=filepath,mimetype="text/csv")
-
-#file_id=D_Handel.uploadFile(filename='a.csv',filepath='a.csv',mimetype="text/csv",folder_id=folder_id,convert=True)
-    #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
-    #D_Handel.set_shard(file_id=file_id)
+        if file_id is not None:
+            file_id=self.updateFile(file_id=file_id,filepath=filepath,mimetype="text/csv")
+        else:
+            file_id=self.uploadFile(filename=filename,filepath=filepath,mimetype="text/csv",folder_id=folder_id,convert=True)
+            #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
+            self.set_share(file_id=file_id)
         url=self.get_file_url(file_id=file_id)
 
         return url   
@@ -433,7 +434,7 @@ def main():
     #                  ,filename=filename
     #                  ,filenametype=filenametype
     #                  ,local_file_path=local_file_path)a
-    D_Handel.saveReport(filename='a',filepath='a.csv')
+    D_Handel.saveReport(filename='G',filepath='a.csv')
     
 
 
@@ -447,7 +448,7 @@ def main():
 
     #file_id=D_Handel.uploadFile(filename='a.csv',filepath='a.csv',mimetype="text/csv",folder_id=folder_id,convert=True)
     #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
-    #D_Handel.set_shard(file_id=file_id)
+    #D_Handel.set_share(file_id=file_id)
    # D_Handel.get_file_url(file_id=file_id)
  
 #     if folder_id is None:
