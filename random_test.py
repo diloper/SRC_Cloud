@@ -780,13 +780,13 @@ def readfromsql_v2(dir,stockid,dateformate=False,sql=None):
 
     db_handler.close()
     return df_mysql
-def show_over_num_result(num=10,window=10):
+def show_over_num_result(num=10,window=10,duration=10):
   maxtime=10
   t = pd.DataFrame()
   gap=0.1
   while(1):
 
-    result=filter_financing(duration=10,gap=gap,window=window)
+    result=filter_financing(duration=duration,gap=gap,window=window)
     # result=result.copy()
     t=t.append(result, ignore_index=True)
     t.drop_duplicates(inplace=True)
@@ -822,6 +822,7 @@ def main():
 #    C=SRC_notify(oldfilename=A,df=oldfilename)
     #print(A)
     a=show_over_num_result(num=30,window=20)
+    #a.to_csv("a.csv",index=False)
     print(a)
 # In[94]:
 
