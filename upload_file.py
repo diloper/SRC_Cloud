@@ -104,9 +104,18 @@ class Google_Driver_API:
 #             for item in items:
 #                 print('{0} ({1})'.format(item['name'], item['id']))
 
-    def uploadFile(self,filename,filepath,mimetype,folder_id):
+    def updateFile(self,file_id,filepath,mimetype):
+        media = MediaFileUpload(filepath,mimetype=mimetype)
+
+        file = self.drive_service.files().update(fileId=file_id, media_body=media).execute()
+        return file.get('id')
+    def uploadFile(self,filename,filepath,mimetype,folder_id,convert=False):
     #     'parents':[{"id":"0B6Nxxxxxxxx"}]
+        SHT_MIMETYPE = 'application/vnd.google-apps.spreadsheet'
         file_metadata = {'name':filename}
+        if convert:
+        # Import CSV file to Google Drive as a Google Sheets file
+            file_metadata = {'name': filename, 'mimeType': SHT_MIMETYPE}
         # print("uploadFile file",filename)
         if folder_id is not None:
              file_metadata.update( {'parents' : [folder_id]} )
@@ -116,7 +125,7 @@ class Google_Driver_API:
                                             media_body=media,
                                             fields='id').execute()
 #         print('File ID: %s' % file.get('id'))
-
+        return file.get('id')
     def downloadFile_SRC(self,file_id,local_filepath,IO=False):
         request = self.drive_service.files().get_media(fileId=file_id)
         fh = io.BytesIO()
@@ -337,7 +346,32 @@ class Google_Driver_API:
             print(e)
             
             
-            
+    def set_shard(self,file_id):
+        #print('a')
+        request_body = {
+            'role': 'reader',
+            'type': 'anyone'
+        }
+        response_permission = self.drive_service.permissions().create(fileId=file_id,body=request_body).execute()
+
+    def get_file_url(self,file_id):
+
+        response=self.drive_service.files().get(fileId=file_id,fields='webViewLink').execute()
+        print(response)
+        return response
+    def saveReport(self,filename,filepath,update=False):
+        foldername='Daily Report'
+        folder_id=self.search_folder(name=foldername)
+        file_id=self.search_file(name=filename,folder_id=folder_id)
+        print(file_id)
+        file_id=self.updateFile(file_id=file_id,filepath=filepath,mimetype="text/csv")
+
+#file_id=D_Handel.uploadFile(filename='a.csv',filepath='a.csv',mimetype="text/csv",folder_id=folder_id,convert=True)
+    #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
+    #D_Handel.set_shard(file_id=file_id)
+        url=self.get_file_url(file_id=file_id)
+
+        return url   
     def get_stockid(self,head,tail):
         # D_Handel=Google_Driver_API()
         folder_id=self.search_folder(name='Stock db')
@@ -398,8 +432,24 @@ def main():
     # D_Handel.Uploadfile_Agent(pre_folder=folderlist
     #                  ,filename=filename
     #                  ,filenametype=filenametype
-    #                  ,local_file_path=local_file_path)
-#     folder_id=D_Handel.search_folder(name=foldername)
+    #                  ,local_file_path=local_file_path)a
+    D_Handel.saveReport(filename='a',filepath='a.csv')
+    
+
+
+
+   # foldername='Daily Report'
+   # folder_id=D_Handel.search_folder(name=foldername)
+   # file_id=D_Handel.search_file(name='a',folder_id=folder_id)
+
+   # print(file_id)
+   # file_id=D_Handel.updateFile(file_id=file_id,filepath='a.csv',mimetype="text/csv")
+
+    #file_id=D_Handel.uploadFile(filename='a.csv',filepath='a.csv',mimetype="text/csv",folder_id=folder_id,convert=True)
+    #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
+    #D_Handel.set_shard(file_id=file_id)
+   # D_Handel.get_file_url(file_id=file_id)
+ 
 #     if folder_id is None:
 #         folder_id=D_Handel.search_folder(name='Stock db')
 #         folder_id=D_Handel.createFolder(name=foldername,folder_id=folder_id)
