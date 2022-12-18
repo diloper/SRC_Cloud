@@ -196,4 +196,18 @@ class M_line_Bot_API:
 ### 第三方套件 驗證碼相關 preprocessBatch.py 
 https://github.com/maxmilian/twse_bshtm_captcha
 
+## Windows run docker and mount directory
 
+```
+docker run --rm -v D:\Programming\STOCK\20220914:/tmp  --name SRC_Server  diloper/tensorflow_evn:latest
+
+docker run  --rm -it --mount type=bind,source=D:\Programming\STOCK\20220914,target=/tmp --name SRC_Server diloper/tensorflow_evn:latest
+```
+### troubleshooting
+```
+Error message => docker: Error response from daemon: status code not OK but 500: {"Message":"Unhandled exception: Filesharing has been cancelled","StackTrace":"
+```
+打开docker桌面-》设置，如图：添加要挂载的文件目录，应用就可以了，再执行上面的命令就可以了
+![image](https://user-images.githubusercontent.com/15354113/208278734-bdfcd178-896a-43f3-88ed-e7bbbf60fc88.png)
+
+參考資料來自https://www.cnblogs.com/liangyy/p/13602053.html
