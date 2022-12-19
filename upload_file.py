@@ -464,7 +464,15 @@ def main():
           
             
 if __name__ == '__main__':
-    main()
+    D_Handel=Google_Driver_API()
+    A=D_Handel.getSheetvalue()
+#    print(A)
+#    random_test.sheet_condiction(A)
+    df = pd.DataFrame(A)
+
+    df.columns = ['stockid','date','date_range','value']
+    df = df.replace(r'^\s*$', 10, regex=True)
+    print(df)
 
 
 # In[ ]:
