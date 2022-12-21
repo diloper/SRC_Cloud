@@ -667,9 +667,35 @@ def find_SRC_by_condition(dir):
     return PR.loc[: ,['socketid','end_date','end_close']]
 
 
+def get_highest_during_date(stockid,limit_t=2,timedelta_a=20,timedelta_b=1):
+    return get_lowest_during_date(stockid,limit_t=limit_t,timedelta_a=timedelta_a,timedelta_b=timedelta_b,hight=True)
+def get_lowest_during_date(stockid,limit_t=2,timedelta_a=20,timedelta_b=1,hight=False):
+    #_sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate asc limit 10) ORDER BY date asc'    
+    _sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate asc limit '+str(limit_t)+') ORDER BY date asc'
+    if hight is True:
+        _sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate desc limit '+str(limit_t)+') ORDER BY date asc'
+  # _sql='select * from OHLC'
+    G=readfromsql_v2(dir,str(stockid),sql=_sql)
     
-
-
+    if G is None or G.shape[0] < 1:
+        return None
+    #print(G)
+    today = date.today()
+    now =date.today() - timedelta(days=timedelta_a)
+    nowb =date.today() - timedelta(days=timedelta_b)
+    Today_a = now.strftime("%Y-%m-%d")
+    Today_b = nowb.strftime("%Y-%m-%d")
+    #print(Today)
+    #condA=G['date'] == 0 #
+    condB=G['date'] > Today_a
+    condA=G['date'] <= Today_b
+    result=G[condB & condA]
+    if result.shape[0] < 1 :
+        return None
+    #print(result)
+    return result
+  # 將最後一筆資料手動手入，並移除重複index，並確保區間forloop檢測點完整
+ 
 # 
 def financing_target(stockid,gap=0.06,window_s=10):
   # stockid='2344'
@@ -821,9 +847,16 @@ def main():
     #B=SRC_notify(oldfilename=oldfilename,df=A)
 #    C=SRC_notify(oldfilename=A,df=oldfilename)
     #print(A)
-    a=show_over_num_result(num=30,window=20)
+    #get_lowest_during_date(stockid=5876,timedelta_a=10)
+    A=local_file(dir)
+    for stock_id in A:
+        #print(stock_id)
+        s=get_lowest_during_date(stockid=str(stock_id[0]),limit_t=2,timedelta_a=16,timedelta_b=1)
+        if s is not None:
+            print(stock_id)
+    #a=show_over_num_result(num=30,window=20)
     #a.to_csv("a.csv",index=False)
-    print(a)
+    #print(a)
 # In[94]:
 
 if __name__ == '__main__':
