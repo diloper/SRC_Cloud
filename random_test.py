@@ -583,8 +583,28 @@ def SRC_notify(oldfilename,df):
 
 
 
-
-
+def check_sepecific_stock_condiction(df_a):
+    if isinstance(df_a, pd.DataFrame) is not True:
+        return None
+    # print(df_a)    
+    for row in df_a.itertuples():
+        # stockid	start_date	date_range	value
+        stockid=getattr(row, 'stockid')
+        start_date=getattr(row, 'start_date')
+        date_range=getattr(row, 'date_range')
+        value=getattr(row, 'value')
+        # print(date_range)
+        _sql='\
+            SELECT \
+                fin_maintenance_rate,\
+                date\
+            FROM financing\
+            ORDER BY date desc \
+        '
+    # # _sql='select * from OHLC'
+        print(_sql)
+        G=readfromsql_v2(dir,str(1110),sql=_sql)
+        print(G)
 def find_SRC_by_condition(dir):
     #  排序dir下的檔案
     #print("F")
