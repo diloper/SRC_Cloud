@@ -61,7 +61,7 @@ class Google_Driver_API:
         self.drive_service= build('drive', 'v3', credentials=creds, cache_discovery=False)
         self.sheet_service= build('sheets', 'v4', credentials=creds, cache_discovery=False)
      
-    def getSheetvalue(self,SAMPLE_SPREADSHEET_ID='1_NwoXo-M2x250v3Ky7ZPG_pgKk0XOLZP2q8C-xvw6Tc',SAMPLE_RANGE_NAME='financing!A2:D'):
+    def getSheetvalue(self,SAMPLE_SPREADSHEET_ID='1_NwoXo-M2x250v3Ky7ZPG_pgKk0XOLZP2q8C-xvw6Tc',SAMPLE_RANGE_NAME='financing!A2:E'):
         try:
             sheet = self.sheet_service.spreadsheets()
             result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
