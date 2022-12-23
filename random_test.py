@@ -582,29 +582,81 @@ def SRC_notify(oldfilename,df):
         return True
 
 
-
-def check_sepecific_stock_condiction(df_a):
-    if isinstance(df_a, pd.DataFrame) is not True:
-        return None
-    # print(df_a)    
-    for row in df_a.itertuples():
-        # stockid	start_date	date_range	value
-        stockid=getattr(row, 'stockid')
-        start_date=getattr(row, 'start_date')
-        date_range=getattr(row, 'date_range')
-        value=getattr(row, 'value')
-        # print(date_range)
+def compare_value_lower_or_higher(stockid,start_date,date_range,value,action):
+        end_date = datetime.strptime(start_date,"%Y-%m-%d") + timedelta(days=int(date_range))
         _sql='\
             SELECT \
                 fin_maintenance_rate,\
                 date\
             FROM financing\
-            ORDER BY date desc \
+            WHERE 1=1  \
+                AND date >"'+str(start_date)+'"\
+                AND date <="'+str(end_date)+'"\
+            ORDER BY date asc \
         '
     # # _sql='select * from OHLC'
-        print(_sql)
-        G=readfromsql_v2(dir,str(1110),sql=_sql)
-        print(G)
+        # print(_sql)
+
+        G=readfromsql_v2(dir,str(stockid),sql=_sql)
+        if G is None or G.shape[0]<1:
+            return None
+        f_value=float(value)
+        if action == 'high':
+            condictionA=G['fin_maintenance_rate']>=f_value
+        else:
+            condictionA=G['fin_maintenance_rate']<=f_value
+        result=G[condictionA]
+        if result.shape[0] < 1 :
+            return None
+        
+        return result
+
+
+def check_sepecific_stock_condiction(df_a):
+    if isinstance(df_a, pd.DataFrame) is not True:
+        return None
+    filename='Compare_result'
+    diff_filename=filename+"_diff"
+    same_flag=None
+    save_filename=filename
+    if os.path.exists(filename) is True:
+        save_filename=diff_filename        
+    # print(df_a)    
+    for row in df_a.itertuples():
+        
+        stockid=getattr(row, 'stockid')
+        start_date=getattr(row, 'start_date')
+        date_range=getattr(row, 'date_range')
+        result=None
+        action=str(getattr(row, 'action'))
+        # print(str(action) == 'low')
+        # print(stockid+action)
+        
+        if action == 'lowest'or action == 'highest':
+            result=get_lowest_or_highest_from_date(stockid,start_date,limit_t=2,action=action)
+        elif action == 'low' or action == 'high':
+            value=getattr(row, 'value')
+            result=compare_value_lower_or_higher(stockid,start_date,date_range,value,action)
+        
+        # file_compare_before_update
+
+        with open(save_filename, "a") as file_object:            
+            target_string=stockid+' '+start_date+' '+date_range+' '+action+'\n'
+            file_object.write(target_string)
+        if result is None:
+            with open(save_filename, "a") as file_object:
+                file_object.write("None\n")
+        else:
+            result.to_csv(save_filename, mode='a', index=False, header=False)
+        print(result)
+    if os.path.exists(filename) is True:
+        same_flag=filecmp.cmp(diff_filename,filename, shallow=False)
+        if same_flag is True:
+            os.remove(diff_filename)
+        else:
+            os.remove(filename)
+            os.rename(diff_filename, filename)
+    print(same_flag)
 def find_SRC_by_condition(dir):
     #  排序dir下的檔案
     #print("F")
@@ -686,7 +738,35 @@ def find_SRC_by_condition(dir):
     PR.sort_values(by=['end_date'],inplace=True)
     return PR.loc[: ,['socketid','end_date','end_close']]
 
-
+def get_lowest_or_highest_from_date(stockid,start_date,limit_t=2,action='lowest'):
+    _sql='\
+        SELECT \
+            fin_maintenance_rate,\
+            date\
+        FROM financing\
+        WHERE 1=1  \
+            AND date >"'+str(start_date)+'"\
+        ORDER BY fin_maintenance_rate asc\
+        LIMIT '+str(limit_t)+'\
+    '
+    # print(action == 'highest')    
+    if action == 'highest':
+        _sql='\
+            SELECT \
+                fin_maintenance_rate,\
+                date\
+            FROM financing\
+            WHERE 1=1  \
+                AND date >"'+str(start_date)+'"\
+            ORDER BY fin_maintenance_rate desc\
+            LIMIT '+str(limit_t)+'\
+        '
+  # _sql='select * from OHLC'
+    result=readfromsql_v2(dir,str(stockid),sql=_sql)    
+    if result.shape[0] < 1 :
+        return None
+    #print(result)
+    return result
 def get_highest_during_date(stockid,limit_t=2,timedelta_a=20,timedelta_b=1):
     return get_lowest_during_date(stockid,limit_t=limit_t,timedelta_a=timedelta_a,timedelta_b=timedelta_b,hight=True)
 def get_lowest_during_date(stockid,limit_t=2,timedelta_a=20,timedelta_b=1,hight=False):
@@ -848,17 +928,17 @@ import os
 import filecmp
 def diff_file(G,filename):
     diff_filename=filename+"_diff"
-    diff_flag=None
+    same_flag=None
     if os.path.exists(filename) is True:
         G.to_csv(diff_filename)
-        diff_flag=filecmp.cmp(diff_filename,filename, shallow=False)
-        if diff_flag is True:
+        same_flag=filecmp.cmp(diff_filename,filename, shallow=False)
+        if same_flag is True:
             os.remove(diff_filename)
         else:
             G.to_csv(filename)
     else:
         G.to_csv(filename)
-    return diff_flag
+    return same_flag
 
 dir='./small_test/'
 def main():
