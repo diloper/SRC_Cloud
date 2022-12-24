@@ -859,6 +859,7 @@ def financing_target(stockid,gap=0.06,window_s=10):
     # target[['m_time']].iloc[0]=1
     # print(target[['index_diff']].iloc[1])
   target=target[target['m_time']>0]
+  target.drop('m_time', inplace=True, axis=1)
   return target
   # type(pagination['index'])
 def filter_financing(duration=10,gap=0.06,window=10):
@@ -879,8 +880,8 @@ def filter_financing(duration=10,gap=0.06,window=10):
     a.drop(columns=['index_shift', 'SING','index','F_10','F_cost_10','F_10_diff','index_diff'],inplace=True)
     condA=a['Date'] >= frome_date.strftime('%Y-%m-%d')
     condB=a['Date'] <= today.strftime('%Y-%m-%d')
-    condC=a['fin_maintenance_rate']>90
-    condD=a['fin_maintenance_rate']<130
+    condC=a['fin_maintenance_rate']>=80
+    condD=a['fin_maintenance_rate']<=130
     result=a[condA & condB & condC &  condD]
     result=result.copy()
     result['stockid']=str(stock_id[0])
