@@ -359,15 +359,15 @@ class Google_Driver_API:
         response=self.drive_service.files().get(fileId=file_id,fields='webViewLink').execute()
         print(response)
         return response
-    def saveReport(self,filename,filepath,update=False):
+    def saveReport(self,filename,filepath,force_update=False,convert=True,mimetype="text/csv"):
         foldername='Daily Report'
         folder_id=self.search_folder(name=foldername)
         file_id=self.search_file(name=filename,folder_id=folder_id)
         print(file_id)
         if file_id is not None:
-            file_id=self.updateFile(file_id=file_id,filepath=filepath,mimetype="text/csv")
+            file_id=self.updateFile(file_id=file_id,filepath=filepath,mimetype=mimetype)
         else:
-            file_id=self.uploadFile(filename=filename,filepath=filepath,mimetype="text/csv",folder_id=folder_id,convert=True)
+            file_id=self.uploadFile(filename=filename,filepath=filepath,mimetype=mimetype,folder_id=folder_id,convert=convert)
             #response_permission = service.permissions().create(fileId=file_id,body=request_body).execute()
             self.set_share(file_id=file_id)
         url=self.get_file_url(file_id=file_id)
