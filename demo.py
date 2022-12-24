@@ -377,7 +377,8 @@ def check_google_sheet():
     df = pd.DataFrame(A)
     df.columns = ['stockid','start_date','date_range','value','action']
     df = df.replace(r'^\s*$', 10, regex=True)
-    flag_a,result=my_SRC.check_sepecific_stock_condiction(df)
+    notify_flag,filename=my_SRC.check_sepecific_stock_condiction(df)
+    return notify_flag,filename
 #   local_folder name  ORDER by date DESC
 def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False,reg=r"\d{4}\d{2}\d{2}"):
     if file is True:
@@ -453,7 +454,7 @@ if __name__ == '__main__':
         #G.to_csv(path_or_buf="financing_csv",index=False)
             diff_flag=my_SRC.diff_file(G,"financing.csv")
             if diff_flag is False or diff_flag is None:	
-                Line_agent(condition=4,message=str(G))
+                # Line_agent(condition=4,message=str(G))
                 G=a.saveReport(filename='financing_10',filepath='financing.csv')
                 Line_agent(condition=4,message=str(G))
         G=my_SRC.show_over_num_result(num=100,window=20,duration=30)
@@ -461,7 +462,7 @@ if __name__ == '__main__':
         #G.to_csv(path_or_buf="financing_csv",index=False)
             diff_flag=my_SRC.diff_file(G,"financing_20.csv")
             if diff_flag is False or diff_flag is None:	
-                Line_agent(condition=4,message=str(G))
+                # Line_agent(condition=4,message=str(G))
                 G=a.saveReport(filename='financing_20',filepath='financing_20.csv')
                 Line_agent(condition=4,message=str(G))
 
@@ -471,8 +472,11 @@ if __name__ == '__main__':
         Line_agent(condition=3,message=start_t+str(sys.argv))
         if notify is True:
             Line_agent(condition=4,message=str(A))
-        check_google_sheet()
-
+        diff_flag,filename=check_google_sheet()
+        if diff_flag is False or diff_flag is None:	
+            # Line_agent(condition=4,message=str(G))
+            G=a.saveReport(filename=filename,filepath=filename,convert=False,mimetype="text/csv")
+            Line_agent(condition=4,message=str(G))
     except:
         logging.error("Catch an exception.", exc_info=True)
         Line_agent(condition=3,message="find logging.error")
