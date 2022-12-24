@@ -335,14 +335,14 @@ def upload(D_Handel,folder_id,foldername,file_prex,remove=True):
                 
             shutil.move(filepath,target+"/"+filepath[2:])
         
-
+D_Handel=upload_file.Google_Driver_API()
 def upload_agent():
     directory_list=search_tool.local_folder()
 #     print(directory_list)
     directory_list.sort(reverse = True)
 #     last_folder=directory_list.pop()
 # local_files=local_file(last_folder=last_folder) 
-    D_Handel=upload_file.Google_Driver_API()
+    
     root_folder_id=D_Handel.search_folder(name='Stock db')
 
     for index,foldername in progressbar.progressbar(enumerate(directory_list)):
@@ -370,6 +370,14 @@ def upload_agent():
                                                           ,file_prex=filename,remove=r_flag)
             except Exception as  e:
                 print(e)
+
+
+def check_google_sheet():
+    A=D_Handel.getSheetvalue()
+    df = pd.DataFrame(A)
+    df.columns = ['stockid','start_date','date_range','value','action']
+    df = df.replace(r'^\s*$', 10, regex=True)
+    flag_a,result=my_SRC.check_sepecific_stock_condiction(df)
 #   local_folder name  ORDER by date DESC
 def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False,reg=r"\d{4}\d{2}\d{2}"):
     if file is True:
@@ -463,6 +471,8 @@ if __name__ == '__main__':
         Line_agent(condition=3,message=start_t+str(sys.argv))
         if notify is True:
             Line_agent(condition=4,message=str(A))
+        check_google_sheet()
+
     except:
         logging.error("Catch an exception.", exc_info=True)
         Line_agent(condition=3,message="find logging.error")
