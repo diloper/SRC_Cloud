@@ -396,6 +396,7 @@ def delet_folder(remain_num,check_Empty=True,dir_target='./',file=False,reg=r"\d
         else:
             shutil.rmtree(path, ignore_errors=True)
 
+
 import Stock_SRC_Small as Stock_Small
 import financing_colab as financing
 oldfilename='SRCresult.csv'
@@ -438,12 +439,22 @@ if __name__ == '__main__':
         delet_folder(remain_num=20,dir_target='./log/',check_Empty=False,file=True,reg=r"\d{4}-\d{2}-\d{2}")
         A=my_SRC.find_SRC_by_condition(dir='./small_test/')
         #print(A)
-
-        G=my_SRC.show_over_num_result(num=10)
+        a=upload_file.Google_Driver_API()
+        G=my_SRC.show_over_num_result(num=100)
         if G.shape[0] > 0: 
         #G.to_csv(path_or_buf="financing_csv",index=False)
             diff_flag=my_SRC.diff_file(G,"financing.csv")
             if diff_flag is False or diff_flag is None:	
+                Line_agent(condition=4,message=str(G))
+                G=a.saveReport(filename='financing_10',filepath='financing.csv')
+                Line_agent(condition=4,message=str(G))
+        G=my_SRC.show_over_num_result(num=100,window=20,duration=30)
+        if G.shape[0] > 0: 
+        #G.to_csv(path_or_buf="financing_csv",index=False)
+            diff_flag=my_SRC.diff_file(G,"financing_20.csv")
+            if diff_flag is False or diff_flag is None:	
+                Line_agent(condition=4,message=str(G))
+                G=a.saveReport(filename='financing_20',filepath='financing_20.csv')
                 Line_agent(condition=4,message=str(G))
 
         notify=my_SRC.SRC_notify(oldfilename=oldfilename,df=A)
