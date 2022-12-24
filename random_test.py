@@ -617,7 +617,7 @@ def check_sepecific_stock_condiction(df_a):
         return None
     filename='Compare_result'
     diff_filename=filename+"_diff"
-    same_flag=None
+    diff_flag=False
     save_filename=filename
     if os.path.exists(filename) is True:
         save_filename=diff_filename        
@@ -648,15 +648,16 @@ def check_sepecific_stock_condiction(df_a):
                 file_object.write("None\n")
         else:
             result.to_csv(save_filename, mode='a', index=False, header=False)
-        print(result)
+        # print(result)
     if os.path.exists(filename) is True:
-        same_flag=filecmp.cmp(diff_filename,filename, shallow=False)
-        if same_flag is True:
+        diff_flag=filecmp.cmp(diff_filename,filename, shallow=False)
+        if diff_flag is True:
             os.remove(diff_filename)
         else:
             os.remove(filename)
             os.rename(diff_filename, filename)
-    print(same_flag)
+    # print(diff_flag)
+    return diff_flag,filename
 def find_SRC_by_condition(dir):
     #  排序dir下的檔案
     #print("F")
@@ -929,17 +930,17 @@ import os
 import filecmp
 def diff_file(G,filename):
     diff_filename=filename+"_diff"
-    same_flag=None
+    diff_flag=None
     if os.path.exists(filename) is True:
         G.to_csv(diff_filename)
-        same_flag=filecmp.cmp(diff_filename,filename, shallow=False)
-        if same_flag is True:
+        diff_flag=filecmp.cmp(diff_filename,filename, shallow=False)
+        if diff_flag is True:
             os.remove(diff_filename)
         else:
             G.to_csv(filename)
     else:
         G.to_csv(filename)
-    return same_flag
+    return diff_flag
 
 dir='./small_test/'
 def main():
