@@ -619,8 +619,10 @@ def check_sepecific_stock_condiction(df_a):
     diff_filename=filename+"_diff"
     diff_flag=False
     save_filename=filename
+    file_exist=False
     if os.path.exists(filename) is True:
-        save_filename=diff_filename        
+        save_filename=diff_filename
+        file_exist=True        
     # print(df_a)    
     for row in df_a.itertuples():
         
@@ -649,7 +651,7 @@ def check_sepecific_stock_condiction(df_a):
         else:
             result.to_csv(save_filename, mode='a', index=False, header=False)
         # print(result)
-    if os.path.exists(filename) is True:
+    if file_exist:
         diff_flag=filecmp.cmp(diff_filename,filename, shallow=False)
         if diff_flag is True:
             os.remove(diff_filename)
