@@ -437,6 +437,11 @@ if __name__ == '__main__':
 
         print ('Argument List:', str(sys.argv))
     
+        diff_flag,filename=check_google_sheet()
+        if diff_flag is False or diff_flag is None:	
+            # Line_agent(condition=4,message=str(G))
+            G=D_Handel.saveReport(filename=filename,filepath=filename,convert=False,mimetype="text/csv")
+            Line_agent(condition=4,message=str(G))
         start_t=current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         financing.main()
         main()
@@ -472,11 +477,7 @@ if __name__ == '__main__':
         Line_agent(condition=3,message=start_t+str(sys.argv))
         if notify is True:
             Line_agent(condition=4,message=str(A))
-        diff_flag,filename=check_google_sheet()
-        if diff_flag is False or diff_flag is None:	
-            # Line_agent(condition=4,message=str(G))
-            G=D_Handel.saveReport(filename=filename,filepath=filename,convert=False,mimetype="text/csv")
-            Line_agent(condition=4,message=str(G))
+
     except:
         logging.error("Catch an exception.", exc_info=True)
         Line_agent(condition=3,message="find logging.error")
