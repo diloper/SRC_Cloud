@@ -633,7 +633,7 @@ def check_sepecific_stock_condiction(df_a):
         action=str(getattr(row, 'action'))
         # print(str(action) == 'low')
         # print(stockid+action)
-        
+        value=None 
         if action == 'lowest'or action == 'highest':
             result=get_lowest_or_highest_from_date(stockid,start_date,limit_t=2,action=action)
         elif action == 'low' or action == 'high':
@@ -643,7 +643,10 @@ def check_sepecific_stock_condiction(df_a):
         # file_compare_before_update
 
         with open(save_filename, "a") as file_object:            
-            target_string=stockid+' '+start_date+' '+date_range+' '+action+'\n'
+            if value is None:
+                target_string=stockid+' '+start_date+' '+date_range+' '+action+'\n'
+            else:
+                target_string=stockid+' '+start_date+' '+date_range+' '+action+' '+value+'\n'
             file_object.write(target_string)
         if result is None:
             with open(save_filename, "a") as file_object:
