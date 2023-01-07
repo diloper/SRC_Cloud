@@ -639,11 +639,16 @@ def check_sepecific_stock_condiction(df_a):
         elif action == 'low' or action == 'high':
             value=getattr(row, 'value')
             result=compare_value_lower_or_higher(stockid,start_date,date_range,value,action)
-        
+        elif action == 'find_all_lowest':
+            print('find_all_lowest')
+            result=find_history_high_low(start_date)
+            #resut=get_lowest_with_given_date(stockid,start_date,hight=False)
         # file_compare_before_update
 
         with open(save_filename, "a") as file_object:            
-            if value is None:
+            if value is None and action == 'find_all_lowest':
+                target_string=start_date+' '+action+'\n'
+            elif value is None:
                 target_string=stockid+' '+start_date+' '+date_range+' '+action+'\n'
             else:
                 target_string=stockid+' '+start_date+' '+date_range+' '+action+' '+value+'\n'
@@ -948,26 +953,54 @@ def diff_file(G,filename):
         G.to_csv(filename)
     return diff_flag
 
+def get_lowest_with_given_date(stockid,start_date,limit_t=2,hight=False):
+    #_sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate asc limit 10) ORDER BY date asc'    
+    _sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate asc limit '+str(limit_t)+') ORDER BY date asc'
+    if hight is True:
+        _sql='select * from (select  fin_maintenance_rate , date from financing ORDER BY fin_maintenance_rate desc limit '+str(limit_t)+') ORDER BY date asc'
+  # _sql='select * from OHLC'
+    G=readfromsql_v2(dir,str(stockid),sql=_sql)
+    
+    if G is None:
+        return None
+    #print(G)
+   # today = date.today()
+   # now =date.today() - timedelta(days=timedelta_a)
+   # nowb =date.today() - timedelta(days=timedelta_b)
+   # Today_a = now.strftime("%Y-%m-%d")
+   # Today_b = nowb.strftime("%Y-%m-%d")
+   # #print(Today)
+    #condA=G['date'] == 0 #
+    condB=G['date'] > start_date
+    result=G[condB]
+    if result.shape[0] < 1 :
+        return None
+    #print(result)
+    return result
 
-def  find_history_high_low():
-    now =date.today() - timedelta(days=120)
-    start_date = now.strftime("%Y-%m-%d")
-    greater_day=date.today() - timedelta(days=10)
-    GT=greater_day.strftime("%Y-%m-%d")
-    print(GT)
+def  find_history_high_low(start_date='2022-12-01'):
+    #now =date.today() - timedelta(days=120)
+    #start_date = now.strftime("%Y-%m-%d")
+    #greater_day=date.today() - timedelta(days=5)
+    #GT=greater_day.strftime("%Y-%m-%d")
+    #print(GT)
+    dfG = pd.DataFrame(columns=['stockid','date','fin_maintenance_rate'])
     A=local_file(dir)
     for stock_id in A:
         #print(stock_id)
-        s=get_lowest_or_highest_from_date(stockid=str(stock_id[0]),start_date=start_date,limit_t=1,action='lowest')
+        s=get_lowest_with_given_date(stockid=str(stock_id[0]),start_date=start_date,limit_t=1,hight=False)
+        #s=get_lowest_or_highest_from_date(stockid=str(stock_id[0]),start_date=start_date,limit_t=1,action='lowest')
         # s=get_lowest_during_date(stockid=str(stock_id[0]),limit_t=2,timedelta_a=16,timedelta_b=1)
         if s is not None:
             # print(s)
-            conditionA=s['Date']>GT
-            if s[conditionA].shape[0]>0:
-                print(stock_id)
-                print(s[conditionA])
-
-
+            #conditionA=s['Date']>GT
+            s['stockid'] = str(stock_id[0])
+            #print(stock_id)
+            #print(s)
+            dfG=dfG.append(s)
+            #dfG = dfG.append({'stockid': str(stock_id[0]),'date':str_ind,'fin_maintenance_rate':getattr(row, 'Date')}, ignore_index=True)
+    print(dfG)            
+    return dfG
 
 dir='./small_test/'
 def main():
