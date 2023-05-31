@@ -28,7 +28,8 @@ def get_OHLC_twse(stockid,date='20220104',sleep=5):
     my_headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'
                  }
 #     url='https://goodinfo.tw/StockInfo/ShowK_Chart.asp?STOCK_ID='+str(stockid) +'&CHT_CAT2=DATE'
-    url='https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date='+str(date) +'&stockNo='+str(stockid)
+    #url='https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date='+str(date) +'&stockNo='+str(stockid)
+    url='https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?response=json&date='+str(date) +'&stockNo='+str(stockid)
     s = requests.Session()
     
     Resp=s.post(url,headers =my_headers)
